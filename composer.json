@@ -1,0 +1,54 @@
+{
+  "name": "horizom/core",
+  "description": "Light PHP framework",
+  "version": "1.1.0",
+  "keywords": [
+    "horizon",
+    "horizom",
+    "framework",
+    "php"
+  ],
+  "license": "MIT",
+  "homepage": "https://horizom.github.io/core",
+  "support": {
+    "issues": "https://github.com/horizom/core/issues"
+  },
+  "authors": [{
+    "name": "Horizom Team",
+    "email": "horizom.team@gmail.com"
+  }],
+  "require": {
+    "psr/container": "^1.0",
+    "psr/http-factory": "^1.0",
+    "psr/http-message": "^1.0",
+    "psr/http-server-handler": "^1.0",
+    "aura/router": "^3.1",
+    "filp/whoops": "^2.7",
+    "illuminate/collections": "^8.0",
+    "illuminate/contracts": "^8.0",
+    "illuminate/database": "^8.0",
+    "illuminate/support": "^8.0",
+    "middlewares/whoops": "^2.0",
+    "middlewares/request-handler": "^2.0",
+    "guzzlehttp/psr7": "^1.6",
+    "http-interop/http-factory-guzzle": "^1.0",
+    "jenssegers/blade": "^1.3"
+  },
+  "require-dev": {
+    "php": "^7.2.5",
+    "digitalnature/php-ref": "^1.3"
+  },
+  "autoload": {
+    "psr-4": {
+      "Horizom\\": "src/",
+      "Tests\\": "tests/app/"
+    },
+    "files": [
+      "src/Support/helpers.php"
+    ]
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "minimum-stability": "dev"
+}
