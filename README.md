@@ -1,4 +1,4 @@
-<p align="center"><img src="https://horizom.github.io/dist/images/horizom-logo-color.svg" width="400"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/horizom/horizom.github.io/master/images/horizom-logo-color.svg" width="400"></p>
 
 <p align="center">
 <a href="https://packagist.org/packages/horizom/core"><img src="https://poser.pugx.org/horizom/core/d/total.svg" alt="Total Downloads"></a>
