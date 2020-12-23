@@ -1,4 +1,4 @@
-<p align="center"><img src="https://horizom.github.io/dist/images/horizom-logo-color.svg" width="400"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/horizom/horizom.github.io/master/images/horizom-logo-color.svg" width="400"></p>
 
 <p align="center">
 <a href="https://packagist.org/packages/horizom/core"><img src="https://poser.pugx.org/horizom/core/d/total.svg" alt="Total Downloads"></a>
@@ -12,7 +12,7 @@
 
 ## Learning Horizom
 
-Horizom has the most extensive and thorough documentation and video tutorial library of any modern web application framework. The [Horizom documentation](https://horizom.github.io/core) is in-depth and complete, making it a breeze to get started learning the framework.
+Horizom has the most extensive and thorough documentation and video tutorial library of any modern web application framework. The [Horizom documentation](https://horizom.gitbook.io) is in-depth and complete, making it a breeze to get started learning the framework.
 
 ## License
 
