@@ -2,29 +2,31 @@
 
 namespace Horizom\Http;
 
+use RuntimeException;
+use InvalidArgumentException;
+use Horizom\View\Blade;
 use GuzzleHttp\Psr7\Response as GuzzleHttpResponse;
 use Middlewares\Utils\Factory;
+use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
-use Horizom\Core\Renderer;
 
-class Response extends GuzzleHttpResponse implements ResponseInterface
+class Response extends GuzzleHttpResponse
 {
-    /**
-     * Application base url
-     * @var string
-     */
-    private $baseUrl;
-
     /**
      * @var ResponseFactoryInterface
      * */
-    private $factory;
+    protected $responseFactory;
+
+    /**
+     * @var StreamFactoryInterface
+     */
+    protected $streamFactory;
 
     /**
      * @var string
      * */
-    private $notFoundMessage;
+    protected $notFoundMessage = 'The page you are looking for could not be found.';
 
     /**
      * Horizom\Http\Response
@@ -38,54 +40,173 @@ class Response extends GuzzleHttpResponse implements ResponseInterface
     ) {
         parent::__construct($status, $headers, $body, $version, $reason);
 
-        $this->factory = Factory::getResponseFactory();
-        $this->notFoundMessage = 'The page you are looking for could not be found.';
+        $this->responseFactory = Factory::getResponseFactory();
+        $this->streamFactory = Factory::getStreamFactory();
     }
 
     /**
-     * Redirect the user to another URL
+     * Create new response from instance
      */
-    public function redirect($url = null, bool $external = false, int $code = 302): ResponseInterface
+    public static function fromInstance(ResponseInterface $response): self
     {
-        if (!$external) {
-            $url = (is_null($url)) ? $this->baseUrl : $this->baseUrl . '/' . trim($url, '/');
+        $status = $response->getStatusCode();
+        $headers = $response->getHeaders();
+        $body = $response->getBody();
+        $version = $response->getProtocolVersion();
+        $reason = $response->getReasonPhrase();
+
+        return new Response($status, $headers, $body, $version, $reason);
+    }
+
+    /**
+     * Redirect to specified location
+     *
+     * This method prepares the response object to return an HTTP Redirect
+     * response to the client.
+     *
+     * @param string    $url The redirect destination.
+     * @param int|null  $status The redirect HTTP status code.
+     */
+    public function redirect(string $url, ?int $status = null): ResponseInterface
+    {
+        $response = $this->responseFactory->createResponse();
+        $response->withHeader('Location', $url);
+
+        if ($status === null) {
+            $status = 302;
         }
 
-        return $this->factory->createResponse($code)->withHeader('Location', $url);
+        $response = $response->withStatus($status);
+
+        return $response;
     }
 
     /**
      * Return a view as the response's content
-     * @TODO: implement blade tamplate
      */
-    public function view(string $name, array $data = []): ResponseInterface
+    public function view(string $name, array $data = [], $contentType = 'text/html'): ResponseInterface
     {
-        $output = Renderer::make($name, $data);
-        $response = $this->withHeader('Content-type', 'text/html');
+        $blade = new Blade(HORIZOM_ROOT . '/resources/views', HORIZOM_ROOT . '/resources/cache');
+        $output = $blade->make($name, $data)->render();
+        $response = $this->withHeader('Content-type', $contentType);
         $response->getBody()->write($output);
 
         return $response;
     }
 
     /**
-     * Automatically set the Content-Type header to application/json, as well as convert the given array to JSON
+     * Write JSON to Response Body.
+     *
+     * This method prepares the response object to return an HTTP Json
+     * response to the client.
      */
-    public function json(array $data, int $statusCode = 200): ResponseInterface
+    public function json($data, ?int $status = null, int $options = 0, int $depth = 512): ResponseInterface
     {
-        $response = $this->withHeader('Content-type', 'application/json')->withStatus($statusCode);
-        $response->getBody()->write(json_encode($data));
+        $json = (string) json_encode($data, $options, $depth);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new RuntimeException(json_last_error_msg(), json_last_error());
+        }
+
+        $response = $this->responseFactory->createResponse()
+            ->withHeader('Content-Type', 'application/json')
+            ->withBody($this->streamFactory->createStream($json));
+
+        if ($status !== null) {
+            $response = $response->withStatus($status);
+        }
 
         return $response;
     }
 
     /**
-     * NotFound response
-     * @param string|null
+     * This method will trigger the client to download the specified file
+     * It will append the `Content-Disposition` header to the response object
+     *
+     * @param string|resource|StreamInterface $file
+     * @param string|null $name
+     * @param bool|string $contentType
      */
-    public function notFound($message = null)
+    public function download($file, string $name = null, $contentType = true): ResponseInterface
+    {
+        $disposition = 'attachment';
+        $fileName = $name;
+
+        if (is_string($file) && $name === null) {
+            $fileName = basename($file);
+        }
+
+        if ($name === null && (is_resource($file) || $file instanceof StreamInterface)) {
+            $metaData = $file instanceof StreamInterface
+                ? $file->getMetadata()
+                : stream_get_meta_data($file);
+
+            if (is_array($metaData) && isset($metaData['uri'])) {
+                $uri = $metaData['uri'];
+                if ('php://' !== substr($uri, 0, 6)) {
+                    $fileName = basename($uri);
+                }
+            }
+        }
+
+        if (is_string($fileName) && strlen($fileName)) {
+            /*
+             * The regex used below is to ensure that the $fileName contains only
+             * characters ranging from ASCII 128-255 and ASCII 0-31 and 127 are replaced with an empty string
+             */
+            $disposition .= '; filename="' . preg_replace('/[\x00-\x1F\x7F\"]/', ' ', $fileName) . '"';
+            $disposition .= "; filename*=UTF-8''" . rawurlencode($fileName);
+        }
+
+        return $this
+            ->file($file, $contentType)
+            ->withHeader('Content-Disposition', $disposition);
+    }
+
+    /**
+     * Display a file, such as an image or PDF, directly in the user's browser instead of initiating a download.
+     * 
+     * @param string|resource|StreamInterface $file
+     * @param bool|string $contentType
+     * 
+     * @throws RuntimeException If the file cannot be opened.
+     * @throws InvalidArgumentException If the mode is invalid.
+     */
+    public function file($file, $contentType = true): ResponseInterface
+    {
+        $response = $this->responseFactory->createResponse();
+
+        if (is_resource($file)) {
+            $response = $response->withBody($this->streamFactory->createStreamFromResource($file));
+        } elseif (is_string($file)) {
+            $response = $response->withBody($this->streamFactory->createStreamFromFile($file));
+        } elseif ($file instanceof StreamInterface) {
+            $response = $response->withBody($file);
+        } else {
+            throw new InvalidArgumentException(
+                'Parameter 1 of Response::withFile() must be a resource, a string ' .
+                'or an instance of Psr\Http\Message\StreamInterface.'
+            );
+        }
+
+        if ($contentType === true) {
+            $contentType = is_string($file) ? mime_content_type($file) : 'application/octet-stream';
+        }
+
+        if (is_string($contentType)) {
+            $response = $response->withHeader('Content-Type', $contentType);
+        }
+
+        return $response;
+    }
+
+    /**
+     * Not Found response
+     */
+    public function notFound(string $message = null): ResponseInterface
     {
         $output = $message ? $message : $this->notFoundMessage;
-        $response = $this->factory->createResponse(404);
+        $response = $this->responseFactory->createResponse(404);
         $response->getBody()->write($output);
 
         return $response;
@@ -94,12 +215,12 @@ class Response extends GuzzleHttpResponse implements ResponseInterface
     /**
      * Not allowed response
      */
-    public function notAllowed(array $methods)
+    public function notAllowed(array $methods): ResponseInterface
     {
         $header = implode(', ', $methods);
         $output = "Method not allowed. Must be one of: $header.";
 
-        $response = $this->factory->createResponse(405)->withHeader('Allow', $header);
+        $response = $this->responseFactory->createResponse(405)->withHeader('Allow', $header);
         $response->getBody()->write($output);
 
         return $response;
@@ -114,18 +235,60 @@ class Response extends GuzzleHttpResponse implements ResponseInterface
     }
 
     /**
-     * Generate a response that forces the user's browser to download the file at the given path.
+     * Convert response to string.
      */
-    public function download(string $filepath, string $name, string $headers)
+    public function emit()
     {
-        # code...
+        $response = $this;
+
+        $http_line = sprintf(
+            'HTTP/%s %s %s',
+            $response->getProtocolVersion(),
+            $response->getStatusCode(),
+            $response->getReasonPhrase()
+        );
+
+        header($http_line, true, $response->getStatusCode());
+
+        foreach ($response->getHeaders() as $name => $values) {
+            foreach ($values as $value) {
+                header("$name: $value", false);
+            }
+        }
+
+        $stream = $response->getBody();
+
+        if ($stream->isSeekable()) {
+            $stream->rewind();
+        }
+
+        while (!$stream->eof()) {
+            echo $stream->read(1024 * 8);
+        }
     }
 
     /**
-     * Display a file, such as an image or PDF, directly in the user's browser instead of initiating a download.
+     * Convert response to string.
      */
-    public function file(string $filepath, array $headers)
+    public function __toString(): string
     {
-        # code...
+        $response = $this;
+
+        $output = sprintf(
+            'HTTP/%s %s %s%s',
+            $response->getProtocolVersion(),
+            $response->getStatusCode(),
+            $response->getReasonPhrase(),
+            "\r\n"
+        );
+
+        foreach ($response->getHeaders() as $name => $values) {
+            $output .= sprintf('%s: %s', $name, $response->getHeaderLine($name)) . "\r\n";
+        }
+
+        $output .= "\r\n";
+        $output .= (string) $response->getBody();
+
+        return $output;
     }
 }

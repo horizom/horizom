@@ -1,29 +1,41 @@
 <?php
 
-namespace Horizom\Core;
+namespace Horizom;
 
 use Closure;
-use LogicException;
 use InvalidArgumentException;
-use Middlewares\Utils\Factory;
-use Psr\Http\Message\RequestInterface;
+use LogicException;
+use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
-class Dispatcher implements RequestHandlerInterface
+class Dispatcher implements MiddlewareInterface, RequestHandlerInterface
 {
     /**
-     * Middlewares stack
      * @var MiddlewareInterface[]
      */
     private $middlewares;
 
     /**
+     * @var ContainerInterface|null
+     */
+    private $container;
+
+    /**
      * @var RequestHandlerInterface|null
      */
     private $next;
+
+    /**
+     * @param MiddlewareInterface[]|string[]|array[]|Closure[] $middleware
+     */
+    public function __construct(array $middleware = [], ContainerInterface $container = null)
+    {
+        $this->middlewares = $middleware;
+        $this->container = $container;
+    }
 
     /**
      * Magic method to execute the dispatcher as a callable
@@ -34,24 +46,16 @@ class Dispatcher implements RequestHandlerInterface
     }
 
     /**
-     * Add new middleware to queue
-     */
-    public function pipe(MiddlewareInterface $middlware)
-    {
-        $this->middlewares[] = $middlware;
-    }
-
-    /**
      * Dispatch the request, return a response.
      */
-    public function dispatch(RequestInterface $request): ResponseInterface
+    public function dispatch(ServerRequestInterface $request): ResponseInterface
     {
         reset($this->middlewares);
         return $this->handle($request);
     }
 
     /**
-     * Handles the current entry in the middleware queue and advances.
+     * @see RequestHandlerInterface
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
@@ -60,8 +64,6 @@ class Dispatcher implements RequestHandlerInterface
         if ($middleware === false) {
             if ($this->next !== null) {
                 return $this->next->handle($request);
-            } else {
-                return Factory::createResponse();
             }
 
             throw new LogicException('Middleware queue exhausted');
@@ -76,7 +78,18 @@ class Dispatcher implements RequestHandlerInterface
     public function process(ServerRequestInterface $request, RequestHandlerInterface $next): ResponseInterface
     {
         $this->next = $next;
+
         return $this->dispatch($request);
+    }
+
+    /**
+     * Add new middleware in stack
+     * 
+     * @param MiddlewareInterface|string|callable $middleware
+     */
+    public function add($middleware)
+    {
+        $this->middlewares[] = $middleware;
     }
 
     /**
@@ -106,7 +119,9 @@ class Dispatcher implements RequestHandlerInterface
                     return $this->get($request);
                 }
 
-                if (!is_callable($condition)) {
+                if (is_string($condition)) {
+                    $condition = new Matchers\Path($condition);
+                } elseif (!is_callable($condition)) {
                     throw new InvalidArgumentException('Invalid matcher. Must be a boolean, string or a callable');
                 }
 
@@ -114,6 +129,14 @@ class Dispatcher implements RequestHandlerInterface
                     return $this->get($request);
                 }
             }
+        }
+
+        if (is_string($middleware)) {
+            if ($this->container === null) {
+                throw new InvalidArgumentException(sprintf('No valid middleware provided (%s)', $middleware));
+            }
+
+            $middleware = $this->container->get($middleware);
         }
 
         if ($middleware instanceof Closure) {
@@ -130,12 +153,12 @@ class Dispatcher implements RequestHandlerInterface
     /**
      * Create a middleware from a closure
      */
-    private function createMiddlewareFromClosure(\Closure $handler): MiddlewareInterface
+    private static function createMiddlewareFromClosure(Closure $handler): MiddlewareInterface
     {
-        return new class ($handler) implements MiddlewareInterface
-        {
+        return new class($handler) implements MiddlewareInterface {
             private $handler;
-            public function __construct(\Closure $handler)
+
+            public function __construct(Closure $handler)
             {
                 $this->handler = $handler;
             }

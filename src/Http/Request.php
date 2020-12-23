@@ -2,16 +2,16 @@
 
 namespace Horizom\Http;
 
-use Aura\Router\Route as AuraRoute;
-use GuzzleHttp\Psr7\ServerRequest as BaseServerRequest;
+use RuntimeException;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use GuzzleHttp\Psr7\ServerRequest;
+use Psr\Http\Message\UriInterface;
 use Horizom\Collection\DataCollection;
 use Horizom\Collection\FilesDataCollection;
 use Horizom\Collection\ServerDataCollection;
-use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\UriInterface;
 
-class Request extends BaseServerRequest implements ServerRequestInterface
+class Request extends ServerRequest
 {
     /**
      * @var string
@@ -34,19 +34,9 @@ class Request extends BaseServerRequest implements ServerRequestInterface
     private $full_url;
 
     /** 
-     * @var string
-     */
-    private $method;
-
-    /** 
      * @var UriInterface 
      */
     private $uri;
-
-    /**
-     * @var array
-     */
-    private $route;
 
     /**
      * @var DataCollection GET (query) parameters
@@ -74,17 +64,15 @@ class Request extends BaseServerRequest implements ServerRequestInterface
     private $files;
 
     /**
-     * Horizom\Http\Response
+     * The route resolver callback.
+     *
+     * @var \Closure
      */
+    protected $routeResolver;
+
     public function __construct($method, $uri, array $headers = [], $body = null, $version = '1.1', array $serverParams = [])
     {
         parent::__construct($method, $uri, $headers, $body, $version, $serverParams);
-
-        $this->route = [
-            'name' => '',
-            'controller' => '',
-            'action' => ''
-        ];
 
         if (!($uri instanceof UriInterface)) {
             $uri = new Uri($uri);
@@ -139,16 +127,9 @@ class Request extends BaseServerRequest implements ServerRequestInterface
     }
 
     /**
-     * Return a Request
-     * $_GET
-     * $_POST
-     * $_COOKIE
-     * $_FILES
-     * $_SERVER
-     *
-     * @return Request
+     * Create new Request from instance
      */
-    public static function fromInstance()
+    public static function fromInstance(): self
     {
         $method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
         $headers = getallheaders();
@@ -156,6 +137,14 @@ class Request extends BaseServerRequest implements ServerRequestInterface
         $protocol = isset($_SERVER['SERVER_PROTOCOL']) ? str_replace('HTTP/', '', $_SERVER['SERVER_PROTOCOL']) : '1.1';
 
         return new Request($method, $uri, $headers, null, $protocol, $_SERVER);
+    }
+
+    /**
+     * Return the Request instance.
+     */
+    public function instance(): self
+    {
+        return $this;
     }
 
     /**
@@ -167,11 +156,23 @@ class Request extends BaseServerRequest implements ServerRequestInterface
     }
 
     /**
-     * Return the HTTP verb for the request.
+     * Get the request method.
+     *
+     * @return string
      */
-    public function method(string $method)
+    public function method()
     {
-        return $this->method === strtoupper($method);
+        return $this->getMethod();
+    }
+
+    /**
+     * Get the root URL for the application.
+     *
+     * @return string
+     */
+    public function root()
+    {
+        return rtrim($this->baseUrl(), '/');
     }
 
     /**
@@ -258,14 +259,6 @@ class Request extends BaseServerRequest implements ServerRequestInterface
     }
 
     /**
-     * Return the current route data
-     */
-    public function route()
-    {
-        return $this->route;
-    }
-
-    /**
      * Return the base url
      */
     public function baseUrl()
@@ -282,21 +275,107 @@ class Request extends BaseServerRequest implements ServerRequestInterface
     }
 
     /**
-     * Parse the request
+     * Get the client user agent.
+     *
+     * @return string|null
      */
-    public function parseRoute(AuraRoute $route)
+    public function userAgent()
     {
-        $route_map = explode('@', $route->handler);
-        $ctrl_map = array_map('ucfirst', explode('/', $route_map[0]));
+        return $this->headers->get('User-Agent');
+    }
 
-        $controller = (count($ctrl_map) > 1) ? implode(DIRECTORY_SEPARATOR, $ctrl_map) : $ctrl_map[0];
-        $action = isset($route_map[1]) ? $route_map[1] : 'index';
+    /**
+     * Get the route handling the request.
+     *
+     * @param  string|null  $param
+     * @param  mixed  $default
+     *
+     * @return array|string
+     */
+    public function route($param = null, $default = null)
+    {
+        $route = ($this->getRouteResolver())();
 
-        $this->route['name'] = $route->name;
-        $this->route['controller'] = $controller;
-        $this->route['action'] = $action;
+        if (is_null($route) || is_null($param)) {
+            return $route;
+        }
 
-        return $this;
+        return Arr::get($route[2], $param, $default);
+    }
+
+    /**
+     * Get a unique fingerprint for the request / route / IP address.
+     *
+     * @return string
+     * @throws \RuntimeException
+     */
+    public function fingerprint()
+    {
+        if (!$route = $this->route()) {
+            throw new RuntimeException('Unable to generate fingerprint. Route unavailable.');
+        }
+
+        return sha1(implode('|', [
+            $this->getMethod(), $this->root(), $this->path(), $this->ip(),
+        ]));
+    }
+
+    /**
+     * Get id address
+     * 
+     * @return string|null
+     */
+    public function ip()
+    {
+        if ($this->getHeader('http-cf-connecting-ip') !== null) {
+            return $this->getHeader('http-cf-connecting-ip');
+        }
+
+        if ($this->getHeader('http-x-forwarded-for') !== null) {
+            return $this->getHeader('http-x-forwarded_for');
+        }
+
+        return $this->getHeader('remote-addr');
+    }
+
+    /**
+     * Determine if the request is over HTTPS.
+     *
+     * @return bool
+     */
+    public function secure()
+    {
+        return $this->isSecure();
+    }
+
+    /**
+     * Check if request connection is secure
+     */
+    public function isSecure()
+    {
+        return $this->getHeader('http-x-forwarded-proto') === 'https' || $this->getHeader('https') !== null || $this->getHeader('server-port') === 443;
+    }
+
+    /**
+     * Determine if the request is the result of an AJAX call.
+     *
+     * @return bool
+     */
+    public function isXhr(): bool
+    {
+        return (strtolower($this->getHeader('http-x-requested-with')) === 'xmlhttprequest');
+    }
+
+    /**
+     * Get the route resolver callback.
+     *
+     * @return \Closure
+     */
+    public function getRouteResolver()
+    {
+        return $this->routeResolver ?: function () {
+            //
+        };
     }
 
     /**
