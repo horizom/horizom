@@ -3,16 +3,41 @@
 namespace Horizom\Http;
 
 use RuntimeException;
+use Horizom\Collection\FilesCollection;
+use Horizom\Collection\ServerCollection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
-use GuzzleHttp\Psr7\ServerRequest;
+use Illuminate\Support\Collection;
+use GuzzleHttp\Psr7\ServerRequest as BaseRequest;
 use Psr\Http\Message\UriInterface;
-use Horizom\Collection\DataCollection;
-use Horizom\Collection\FilesDataCollection;
-use Horizom\Collection\ServerDataCollection;
 
-class Request extends ServerRequest
+final class Request extends BaseRequest
 {
+    /**
+     * @var Collection GET (query) parameters
+     */
+    private $query;
+
+    /**
+     * @var Collection POST parameters
+     */
+    private $post;
+
+    /**
+     * @var Collection Client cookie data
+     */
+    private $cookie;
+
+    /**
+     * @var ServerDataCollection Server created attributes
+     */
+    private $server;
+
+    /**
+     * @var FilesDataCollection Uploaded temporary files
+     */
+    private $files;
+
     /**
      * @var string
      */
@@ -33,36 +58,6 @@ class Request extends ServerRequest
      */
     private $full_url;
 
-    /** 
-     * @var UriInterface 
-     */
-    private $uri;
-
-    /**
-     * @var DataCollection GET (query) parameters
-     */
-    private $query;
-
-    /**
-     * @var DataCollection POST parameters
-     */
-    private $post;
-
-    /**
-     * @var DataCollection Client cookie data
-     */
-    private $cookie;
-
-    /**
-     * @var ServerDataCollection Server created attributes
-     */
-    private $server;
-
-    /**
-     * @var FilesDataCollection Uploaded temporary files
-     */
-    private $files;
-
     /**
      * The route resolver callback.
      *
@@ -70,26 +65,18 @@ class Request extends ServerRequest
      */
     protected $routeResolver;
 
+    /**
+     * @param string $method HTTP method
+     * @param string|UriInterface $uri URI
+     * @param array $headers Request headers
+     * @param string|resource|StreamInterface|null $body Request body
+     * @param string $version Protocol version
+     */
     public function __construct($method, $uri, array $headers = [], $body = null, $version = '1.1', array $serverParams = [])
     {
         parent::__construct($method, $uri, $headers, $body, $version, $serverParams);
 
-        if (!($uri instanceof UriInterface)) {
-            $uri = new Uri($uri);
-        }
-
-        if (config('app.base_path') === null) {
-            if (isset($_SERVER['PATH_INFO'])) {
-                $base_path = str_replace($_SERVER['PATH_INFO'], '', $uri->getPath());
-            } else {
-                $docRoot = str_replace('\\', '/', $_SERVER['DOCUMENT_ROOT']);
-                $appRoot = str_replace('\\', '/', HORIZOM_ROOT);
-                $base_path = str_replace($docRoot, '', $appRoot);
-            }
-        } else {
-            $base_path = config('app.base_path');
-        }
-
+        $base_path = config('app.base_path');
         $path = trim($base_path, '/');
         $host = $uri->getHost();
         $uri_query = $uri->getQuery();
@@ -101,50 +88,38 @@ class Request extends ServerRequest
         $base_uri = ($path) ? $host . '/' . $path : $host;
         $request_uri = $uri->getPath();
         $queries = $this->parseQuery($uri_query);
-        $www = 'www.';
 
-        if (config('system.redirect.www') && substr($base_uri, 0, 4) !== $www) {
-            $base_uri = $www . $base_uri;
-        }
-
-        $this->method = strtoupper($method);
-        $this->uri = $uri;
-        $this->protocol = $version;
         $this->base_path = $base_path;
         $this->request_path = str_replace($base_path, '', $uri->getPath());
-        $this->base_url = $this->uri->getScheme() . '://' . $base_uri;
-        $this->full_url = $this->url = $this->uri->getScheme() . '://' . $host . $request_uri;
+        $this->base_url = $uri->getScheme() . '://' . $base_uri;
+        $this->full_url = $this->url = $uri->getScheme() . '://' . $host . $request_uri;
 
         if ($uri_query) {
             $this->full_url = $this->full_url . '?' . $uri_query;
         }
 
-        $this->query = new DataCollection($queries);
-        $this->post = new DataCollection($_POST);
-        $this->cookie = new DataCollection($_COOKIE);
-        $this->files = new FilesDataCollection($_FILES);
-        $this->server = new ServerDataCollection($_SERVER);
+        $this->query = new Collection($queries);
+        $this->post = new Collection($_POST);
+        $this->cookie = new Collection($_COOKIE);
+        $this->files = new FilesCollection($_FILES);
+        $this->server = new ServerCollection($_SERVER);
+
+        define("HORIZOM_BASE_PATH", $this->base_path);
+        define("HORIZOM_BASE_URL", $this->base_url);
     }
 
     /**
-     * Create new Request from instance
+     * Create new Request
      */
-    public static function fromInstance(): self
+    public static function create(): self
     {
         $method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
-        $headers = getallheaders();
         $uri = self::getUriFromGlobals();
+        $headers = getallheaders();
+        $body = fopen('php://input', 'r') ?: null;
         $protocol = isset($_SERVER['SERVER_PROTOCOL']) ? str_replace('HTTP/', '', $_SERVER['SERVER_PROTOCOL']) : '1.1';
 
-        return new Request($method, $uri, $headers, null, $protocol, $_SERVER);
-    }
-
-    /**
-     * Return the Request instance.
-     */
-    public function instance(): self
-    {
-        return $this;
+        return new Request($method, $uri, $headers, $body, $protocol, $_SERVER);
     }
 
     /**
@@ -281,7 +256,7 @@ class Request extends ServerRequest
      */
     public function userAgent()
     {
-        return $this->headers->get('User-Agent');
+        return $this->getHeader('User-Agent');
     }
 
     /**
@@ -361,7 +336,27 @@ class Request extends ServerRequest
      *
      * @return bool
      */
-    public function isXhr(): bool
+    public function ajax()
+    {
+        return $this->isXmlHttpRequest();
+    }
+
+    /**
+     * Determine if the request is the result of an PJAX call.
+     *
+     * @return bool
+     */
+    public function pjax()
+    {
+        return $this->getHeader('X-PJAX') == true;
+    }
+
+    /**
+     * Determine if the request is the result of an AJAX call.
+     *
+     * @return bool
+     */
+    public function isXmlHttpRequest(): bool
     {
         return (strtolower($this->getHeader('http-x-requested-with')) === 'xmlhttprequest');
     }

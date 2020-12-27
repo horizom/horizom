@@ -2,6 +2,8 @@
 
 namespace Horizom\Collection;
 
+use Illuminate\Support\Collection;
+
 /**
  * ServerDataCollection
  *
@@ -12,7 +14,7 @@ namespace Horizom\Collection;
  * Inspired by @fabpot's Symfony 2's HttpFoundation
  * @link https://github.com/symfony/HttpFoundation/blob/master/ServerBag.php
  */
-class ServerDataCollection extends DataCollection
+class ServerCollection extends Collection
 {
 
     /**

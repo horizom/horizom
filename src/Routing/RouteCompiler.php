@@ -11,7 +11,7 @@ declare(strict_types=1);
 namespace Horizom\Routing;
 
 use Horizom\Routing\Invoker\RouteInvokerInterface;
-use Horizom\Routing\Middleware\MiddlewarePipeFactoryInterface;
+use Horizom\Dispatcher\MiddlewarePipeFactoryInterface;
 
 class RouteCompiler implements RouteCompilerInterface
 {

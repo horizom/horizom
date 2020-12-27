@@ -13,10 +13,10 @@ namespace Horizom\Routing;
 use Invoker\CallableResolver;
 use Invoker\Invoker;
 use Invoker\ParameterResolver;
+use Horizom\Dispatcher\MiddlewarePipeFactory;
+use Horizom\Dispatcher\MiddlewareResolver;
 use Horizom\Routing\HandlerResolver\PhpDiRouteHandlerResolver;
 use Horizom\Routing\Invoker\PhpDiRouteInvoker;
-use Horizom\Routing\Middleware\MiddlewarePipeFactory;
-use Horizom\Routing\Middleware\MiddlewareResolver;
 use Psr\Container\ContainerInterface;
 
 class RouteCollectorFactory implements RouteCollectorFactoryInterface

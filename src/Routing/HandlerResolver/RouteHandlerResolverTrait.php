@@ -1,22 +1,16 @@
 <?php
-/**
- * This file is part of the Makise-Co Framework
- *
- * World line: 0.571024a
- * (c) Dmitry K. <coder1994@gmail.com>
- */
 
 declare(strict_types=1);
 
 namespace Horizom\Routing\HandlerResolver;
 
 use Closure;
-use MakiseCo\Http\Router\Exception;
-use Psr\Http\Message\ResponseInterface;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionFunction;
 use ReflectionNamedType;
+use Horizom\Routing\Exception;
+use Psr\Http\Message\ResponseInterface;
 
 trait RouteHandlerResolverTrait
 {

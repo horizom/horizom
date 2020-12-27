@@ -1,10 +1,4 @@
 <?php
-/**
- * This file is part of the Makise-Co Framework
- *
- * World line: 0.571024a
- * (c) Dmitry K. <coder1994@gmail.com>
- */
 
 declare(strict_types=1);
 
@@ -37,9 +31,9 @@ class Router implements RouterInterface
 
         switch ($routeInfo[0]) {
             case \FastRoute\Dispatcher::NOT_FOUND:
-                throw new Exception\RouteNotFoundException();
+                throw new \Horizom\Exception\NotFoundException();
             case \FastRoute\Dispatcher::METHOD_NOT_ALLOWED:
-                throw new Exception\MethodNotAllowedException($routeInfo[1]);
+                throw new \Horizom\Exception\MethodNotAllowedException($routeInfo[1]);
             case \FastRoute\Dispatcher::FOUND:
                 /* @var RouteInterface $route */
                 [, $route, $routeArgs] = $routeInfo;
@@ -51,6 +45,6 @@ class Router implements RouterInterface
                 return $route->getPipe()->handle($request);
         }
 
-        throw new Exception\RouteNotFoundException();
+        throw new \Horizom\Exception\NotFoundException();
     }
 }

@@ -1,7 +1,6 @@
 <?php
 
 use Horizom\App;
-use Horizom\Http\Request;
 use Horizom\Http\Response;
 
 if (!function_exists('asset')) {
@@ -10,7 +9,7 @@ if (!function_exists('asset')) {
      */
     function asset(string $path = null)
     {
-        $base_url = trim(Request::fromInstance()->baseUrl(), '/');
+        $base_url = trim(HORIZOM_BASE_URL, '/');
         return ($path) ? $base_url . '/' . $path : $base_url;
     }
 }
@@ -22,7 +21,7 @@ if (!function_exists('config')) {
     function config(string $key, $default = null)
     {
         $configs = App::config();
-        return $configs[$key] || $default;
+        return isset($configs[$key]) ? $configs[$key] : $default;
     }
 }
 
@@ -66,5 +65,16 @@ if (!function_exists('view')) {
     function view(string $name, array $data = [])
     {
         return (new Response())->view($name, $data);
+    }
+}
+
+if (!function_exists('debug')) {
+    /**
+     * var_dump & die
+     */
+    function debug($var)
+    {
+        var_dump($var);
+        die;
     }
 }

@@ -11,7 +11,7 @@ declare(strict_types=1);
 namespace Horizom\Routing;
 
 use Closure;
-use Horizom\Routing\Middleware\MiddlewarePipe;
+use Horizom\Dispatcher\MiddlewarePipe;
 use Psr\Http\Server\MiddlewareInterface;
 
 interface RouteInterface

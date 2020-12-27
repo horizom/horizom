@@ -2,14 +2,15 @@
 
 namespace Horizom\Collection;
 
+use Illuminate\Support\Collection;
+
 /**
- * A DataCollection for "$_FILES" like data
+ * A Collection for "$_FILES" like data
  */
-class FilesDataCollection extends DataCollection
+class FilesCollection extends Collection
 {
     /**
      * Select uloaded $_FILES row
-     * @return FilesDataCollection
      */
     public function row(string $name)
     {

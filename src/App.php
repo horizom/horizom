@@ -2,17 +2,19 @@
 
 namespace Horizom;
 
-use App\Middlewares\ErrorHandlerMiddleware;
+use Horizom\Dispatcher\Dispatcher;
+use Horizom\Dispatcher\MiddlewareResolver;
+use Horizom\Error\ErrorHandlerInterface;
+use Horizom\Error\ErrorHandlingMiddleware;
 use Horizom\Http\Request;
-use Horizom\Http\Response;
 use Horizom\Routing\RouteCollector;
 use Horizom\Routing\RouteCollectorFactory;
-use Horizom\Routing\Middleware\ErrorHandlingMiddleware;
 use Middlewares\Utils\Factory;
 use Middlewares\Utils\FactoryDiscovery;
-use Psr\Container\ContainerInterface;
-use Psr\Http\Server\MiddlewareInterface;
 use Illuminate\Database\Capsule\Manager as DatabaseManager;
+use Psr\Container\ContainerInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Server\MiddlewareInterface;
 
 class App
 {
@@ -41,6 +43,8 @@ class App
 
         'app.locale' => 'en',
 
+        'app.display_errors' => true,
+
         'system.redirect.https' => false,
 
         'system.redirect.www' => false,
@@ -52,6 +56,31 @@ class App
     protected $defaultNamespace;
 
     /**
+     * @var string
+     */
+    protected $basePath;
+
+    /**
+     * @var ContainerInterface
+     */
+    private $container;
+
+    /**
+     * @var Dispatcher
+     */
+    private $dispatcher;
+
+    /**
+     * @var ErrorHandlerInterface
+     */
+    private $errorHandler;
+
+    /**
+     * @var RouteCollector
+     */
+    public $router;
+
+    /**
      * Guzzle factory strategies
      */
     private const GUZZLE_FACTORY = [
@@ -60,46 +89,46 @@ class App
         'serverRequest' => 'Http\Factory\Guzzle\ServerRequestFactory',
         'stream' => 'Http\Factory\Guzzle\StreamFactory',
         'uploadedFile' => 'Http\Factory\Guzzle\UploadedFileFactory',
-        'uri' => 'Http\Factory\Guzzle\UriFactory',
+        'uri' => 'Http\Factory\Guzzle\UriFactory'
     ];
-
-    /**
-     * @var string
-     */
-    protected $basePath;
-
-    /**
-     * @var ContainerInterface
-     */
-    protected $container;
-
-    /**
-     * @var Dispatcher
-     */
-    private $dispatcher;
-
-    /**
-     * @var RouteCollector
-     */
-    public $router;
 
     /**
      * Create new application
      */
-    public function __construct(ContainerInterface $container = null, string $basePath = '')
+    public function __construct(string $basePath = '', ContainerInterface $container = null)
     {
         define("HORIZOM_VERSION", self::VERSION);
-        
-        $this->basePath = $basePath;
-        $this->dispatcher = new Dispatcher();
 
+        $this->basePath = $basePath;
+        Factory::setFactory(new FactoryDiscovery(self::GUZZLE_FACTORY));
+        
         if ($container === null) {
             $containerBuilder = new \DI\ContainerBuilder();
+            $containerBuilder->enableCompilation(HORIZOM_ROOT . '/resources/cache/tmp');
+            $containerBuilder->writeProxiesToFile(true, HORIZOM_ROOT . '/resources/cache/tmp/proxies');
+            $containerBuilder->addDefinitions([
+                "version" => $this->version(),
+                \Horizom\Http\Request::class => Request::create()
+            ]);
+
             $this->container = $containerBuilder->build();
         }
 
+        $resolver = new MiddlewareResolver($this->container);
+        $this->dispatcher = new Dispatcher([], $resolver);
         $this->router = (new RouteCollectorFactory())->create($this->container);
-        Factory::setFactory(new FactoryDiscovery(self::GUZZLE_FACTORY));
+
+        if (config('app.display_errors') === true) {
+            $this->add(new \Middlewares\Whoops());
+        }
+    }
+
+    /**
+     * Get Configuration Values
+     */
+    public static function config()
+    {
+        return self::$settings;
     }
 
     /**
@@ -138,18 +167,6 @@ class App
     }
 
     /**
-     * Register a new middleware
-     * 
-     * @param MiddlewareInterface|string|callable $middleware
-     * @return self
-     */
-    public function add($middleware): self
-    {
-        $this->dispatcher->add($middleware);
-        return $this;
-    }
-
-    /**
      * Load the Eloquent library for the application.
      */
     public function withEloquent(): self
@@ -176,45 +193,78 @@ class App
     }
 
     /**
+     * Set error handler middleware
+     * 
+     * @param ErrorHandlerInterface|string $errorHandler
+     */
+    public function setErrorHandler($errorHandler): self
+    {
+        if (is_string($errorHandler)) {
+            $this->errorHandler = new $errorHandler();
+        } else {
+            $this->errorHandler = $errorHandler;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Register a new middleware
+     * 
+     * @param MiddlewareInterface|string|callable $middleware
+     * @return self
+     */
+    public function add($middleware): self
+    {
+        $this->dispatcher->add($middleware);
+        return $this;
+    }
+
+    /**
      * Run The Application
      */
     public function run()
     {
-        $request = Request::fromGlobals();
-        $router = $this->router->getRouter();
+        $request = $this->container->get(\Horizom\Http\Request::class);
 
-        $routerDispatcher = new \Horizom\Routing\Middleware\Dispatcher([
-            new ErrorHandlingMiddleware(new ErrorHandlerMiddleware()),
-            $router
-        ]);
+        if ($this->errorHandler !== null) {
+            $this->dispatcher->add(new ErrorHandlingMiddleware($this->errorHandler));
+        }
 
-        $this->dispatcher->dispatch($request);
-        $response = $routerDispatcher->handle($request);
-
-        Response::fromInstance($response)->emit();
+        $this->dispatcher->add($this->router->getRouter());
+        $response = $this->dispatcher->dispatch($request);
+        
+        $this->emit($response);
     }
 
     /**
-     * Get Configuration Values
+     * Convert response to string.
      */
-    public static function config()
+    private function emit(ResponseInterface $response)
     {
-        return self::$settings;
-    }
+        $http_line = sprintf(
+            'HTTP/%s %s %s',
+            $response->getProtocolVersion(),
+            $response->getStatusCode(),
+            $response->getReasonPhrase()
+        );
 
-    private function containerDefinitions()
-    {
-        return [
+        header($http_line, true, $response->getStatusCode());
 
-            'db.host' => \DI\env('DB_HOST', 'localhost'),
-            'db.name' => \DI\env('DB_NAME', 'test'),
-            'db.username' => \DI\env('DB_USERNAME', 'root'),
-            'db.password' => \DI\env('DB_PASSWORD', 'root'),
+        foreach ($response->getHeaders() as $name => $values) {
+            foreach ($values as $value) {
+                header("$name: $value", false);
+            }
+        }
 
-            \Horizom\Http\Response::class => \DI\factory(function () {
-                return new Response();
-            })
+        $stream = $response->getBody();
 
-        ];
+        if ($stream->isSeekable()) {
+            $stream->rewind();
+        }
+
+        while (!$stream->eof()) {
+            echo $stream->read(1024 * 8);
+        }
     }
 }

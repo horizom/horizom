@@ -5,13 +5,14 @@ namespace Horizom\Http;
 use RuntimeException;
 use InvalidArgumentException;
 use Horizom\View\Blade;
-use GuzzleHttp\Psr7\Response as GuzzleHttpResponse;
+use GuzzleHttp\Psr7\Response as BaseResponse;
 use Middlewares\Utils\Factory;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 
-class Response extends GuzzleHttpResponse
+final class Response extends BaseResponse
 {
     /**
      * @var ResponseFactoryInterface
@@ -24,20 +25,10 @@ class Response extends GuzzleHttpResponse
     protected $streamFactory;
 
     /**
-     * @var string
-     * */
-    protected $notFoundMessage = 'The page you are looking for could not be found.';
-
-    /**
-     * Horizom\Http\Response
+     * @inherit
      */
-    public function __construct(
-        $status = 200,
-        array $headers = [],
-        $body = null,
-        $version = '1.1',
-        $reason = null
-    ) {
+    public function __construct($status = 200, array $headers = [], $body = null, $version = '1.1', $reason = null)
+    {
         parent::__construct($status, $headers, $body, $version, $reason);
 
         $this->responseFactory = Factory::getResponseFactory();
@@ -86,10 +77,15 @@ class Response extends GuzzleHttpResponse
      */
     public function view(string $name, array $data = [], $contentType = 'text/html'): ResponseInterface
     {
-        $blade = new Blade(HORIZOM_ROOT . '/resources/views', HORIZOM_ROOT . '/resources/cache');
-        $output = $blade->make($name, $data)->render();
-        $response = $this->withHeader('Content-type', $contentType);
-        $response->getBody()->write($output);
+        $blade = new Blade(
+            HORIZOM_ROOT . '/resources/views',
+            HORIZOM_ROOT . '/resources/cache/views'
+        );
+
+        $output = (string) $blade->make($name, $data)->render();
+        $response = $this->responseFactory->createResponse()
+            ->withHeader('Content-type', $contentType)
+            ->withBody($this->streamFactory->createStream($output));
 
         return $response;
     }
@@ -158,9 +154,10 @@ class Response extends GuzzleHttpResponse
             $disposition .= "; filename*=UTF-8''" . rawurlencode($fileName);
         }
 
-        return $this
-            ->file($file, $contentType)
-            ->withHeader('Content-Disposition', $disposition);
+        $response = clone $this;
+        $response->file($file, $contentType)->withHeader('Content-Disposition', $disposition);
+
+        return $response;
     }
 
     /**
@@ -198,73 +195,6 @@ class Response extends GuzzleHttpResponse
         }
 
         return $response;
-    }
-
-    /**
-     * Not Found response
-     */
-    public function notFound(string $message = null): ResponseInterface
-    {
-        $output = $message ? $message : $this->notFoundMessage;
-        $response = $this->responseFactory->createResponse(404);
-        $response->getBody()->write($output);
-
-        return $response;
-    }
-
-    /**
-     * Not allowed response
-     */
-    public function notAllowed(array $methods): ResponseInterface
-    {
-        $header = implode(', ', $methods);
-        $output = "Method not allowed. Must be one of: $header.";
-
-        $response = $this->responseFactory->createResponse(405)->withHeader('Allow', $header);
-        $response->getBody()->write($output);
-
-        return $response;
-    }
-
-    /**
-     * Redirect the user to their previous location, such as when a submitted form is invalid.
-     */
-    public function back()
-    {
-        # code...
-    }
-
-    /**
-     * Convert response to string.
-     */
-    public function emit()
-    {
-        $response = $this;
-
-        $http_line = sprintf(
-            'HTTP/%s %s %s',
-            $response->getProtocolVersion(),
-            $response->getStatusCode(),
-            $response->getReasonPhrase()
-        );
-
-        header($http_line, true, $response->getStatusCode());
-
-        foreach ($response->getHeaders() as $name => $values) {
-            foreach ($values as $value) {
-                header("$name: $value", false);
-            }
-        }
-
-        $stream = $response->getBody();
-
-        if ($stream->isSeekable()) {
-            $stream->rewind();
-        }
-
-        while (!$stream->eof()) {
-            echo $stream->read(1024 * 8);
-        }
     }
 
     /**
