@@ -77,11 +77,14 @@ final class Response extends BaseResponse
      */
     public function view(string $name, array $data = [], $contentType = 'text/html'): ResponseInterface
     {
-        $blade = new Blade(
-            HORIZOM_ROOT . '/resources/views',
-            HORIZOM_ROOT . '/resources/cache/views'
-        );
+        $viewPath = HORIZOM_ROOT . '/resources/views';
+        $viewCachePath = HORIZOM_ROOT . '/resources/cache/views';
 
+        if (!is_dir($viewCachePath)) {
+            mkdir($viewCachePath, 0755, true);
+        }
+
+        $blade = new Blade($viewPath, $viewCachePath);
         $output = (string) $blade->make($name, $data)->render();
         $response = $this->responseFactory->createResponse()
             ->withHeader('Content-type', $contentType)

@@ -21,7 +21,7 @@ class App
     /**
      * @const string Horizom Framework Version
      */
-    protected const VERSION = '2.0.0';
+    protected const VERSION = '2.1.0';
 
     /**
      * @var array

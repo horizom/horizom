@@ -2,6 +2,7 @@
 
 use Horizom\App;
 use Horizom\Http\Response;
+use Horizom\UrlGenerator;
 
 if (!function_exists('asset')) {
     /**
@@ -11,6 +12,21 @@ if (!function_exists('asset')) {
     {
         $base_url = trim(HORIZOM_BASE_URL, '/');
         return ($path) ? $base_url . '/' . $path : $base_url;
+    }
+}
+
+if (!function_exists('url')) {
+    /**
+     * Generate a URL for an asset using the current scheme of the request (HTTP or HTTPS).
+     */
+    function url(string $path = null)
+    {
+        // if ($path === null) {
+        //     return new UrlGenerator();
+        // }
+
+        $base_url = trim(HORIZOM_BASE_URL, '/');
+        return ($path) ? $base_url . '/' . trim($path, '/') : $base_url;
     }
 }
 

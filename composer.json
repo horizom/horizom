@@ -1,7 +1,7 @@
 {
   "name": "horizom/core",
   "description": "Light PHP framework",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "keywords": [
     "horizon",
     "horizom",
@@ -37,7 +37,8 @@
     "psr/container": "^1.0",
     "psr/http-factory": "^1.0",
     "psr/http-message": "^1.0",
-    "psr/http-server-handler": "^1.0"
+    "psr/http-server-handler": "^1.0",
+    "robmorgan/phinx": "^0.12.4"
   },
   "require-dev": {
     "digitalnature/php-ref": "^1.3"
@@ -59,7 +60,7 @@
     "sort-packages": true
   },
   "scripts": {
-    "start": "php -S localhost:8800 -t tests/public"
+    "start": "php -S localhost:8000 -t tests/public"
   },
   "minimum-stability": "stable",
   "prefer-stable": true
