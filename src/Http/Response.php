@@ -67,9 +67,29 @@ final class Response extends BaseResponse
             $status = 302;
         }
 
-        $response = $response->withStatus($status);
+        return $response->withStatus($status);
+    }
 
-        return $response;
+    /**
+     * Redirect to specified location
+     *
+     * This method prepares the response object to return an HTTP Redirect
+     * response to the client.
+     *
+     * @param string    $url The redirect destination.
+     * @param int|null  $status The redirect HTTP status code.
+     */
+    public function redirectWithBaseUrl($url = null, int $status = null): ResponseInterface
+    {
+        $url = (is_null($url)) ? HORIZOM_BASE_URL : HORIZOM_BASE_URL . '/' . trim($url, '/');
+        $response = $this->responseFactory->createResponse();
+        $response->withHeader('Location', $url);
+
+        if ($status === null) {
+            $status = 302;
+        }
+
+        return $response->withStatus($status);
     }
 
     /**
