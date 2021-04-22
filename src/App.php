@@ -4,14 +4,13 @@ namespace Horizom;
 
 use Horizom\Dispatcher\Dispatcher;
 use Horizom\Dispatcher\MiddlewareResolver;
-use Horizom\Error\ErrorHandlerInterface;
-use Horizom\Error\ErrorHandlingMiddleware;
 use Horizom\Http\Request;
+use Horizom\Interfaces\ErrorHandlerInterface;
+use Horizom\Middleware\ErrorHandlingMiddleware;
 use Horizom\Routing\RouteCollector;
 use Horizom\Routing\RouteCollectorFactory;
 use Middlewares\Utils\Factory;
 use Middlewares\Utils\FactoryDiscovery;
-use Illuminate\Database\Capsule\Manager as DatabaseManager;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -21,7 +20,7 @@ class App
     /**
      * @const string Horizom Framework Version
      */
-    protected const VERSION = '2.1.1';
+    protected const VERSION = '2.1.2';
 
     /**
      * @var array
@@ -103,24 +102,16 @@ class App
         Factory::setFactory(new FactoryDiscovery(self::GUZZLE_FACTORY));
         
         if ($container === null) {
-            $containerBuilder = new \DI\ContainerBuilder();
-            $containerBuilder->enableCompilation(HORIZOM_ROOT . '/resources/cache/tmp');
-            $containerBuilder->writeProxiesToFile(true, HORIZOM_ROOT . '/resources/cache/tmp/proxies');
-            $containerBuilder->addDefinitions([
-                "version" => $this->version(),
-                \Horizom\Http\Request::class => Request::create()
-            ]);
-
-            $this->container = $containerBuilder->build();
+            $container = new Container();
+            $container->set("version", $this->version());
+            $container->set(\Horizom\Http\Request::class, Request::create());
         }
 
-        $resolver = new MiddlewareResolver($this->container);
+        $resolver = new MiddlewareResolver($container);
+
         $this->dispatcher = new Dispatcher([], $resolver);
-        $this->router = (new RouteCollectorFactory())->create($this->container);
-
-        if (config('app.display_errors') === true) {
-            $this->add(new \Middlewares\Whoops());
-        }
+        $this->router = (new RouteCollectorFactory())->create($container);
+        $this->container = $container;
     }
 
     /**
@@ -153,6 +144,14 @@ class App
     }
 
     /**
+     * @return \DI\Container
+     */
+    public function getContainer()
+    {
+        return $this->container;
+    }
+
+    /**
      * Set your application base path
      * 
      * If you want to run your Slim Application from a sub-directory 
@@ -163,32 +162,6 @@ class App
     public function setBasePath(string $path = ''): self
     {
         $this->basePath = $path;
-        return $this;
-    }
-
-    /**
-     * Load the Eloquent library for the application.
-     */
-    public function withEloquent(): self
-    {
-        $config = require HORIZOM_ROOT . '/config/database.php';
-        $connections = $config['database.connections'];
-        $name = $config['database.default'];
-
-        $capsule = new DatabaseManager();
-        $capsule->addConnection($connections[$name], $name);
-        $capsule->bootEloquent();
-        $capsule->setAsGlobal();
-
-        return $this;
-    }
-
-    /**
-     * Set default namespace for route-callbacks
-     */
-    public function setDefaultNamespace(string $namespace): self
-    {
-        $this->defaultNamespace = $namespace;
         return $this;
     }
 
@@ -227,8 +200,12 @@ class App
     {
         $request = $this->container->get(\Horizom\Http\Request::class);
 
+        if (config('app.display_errors') === true) {
+            $this->add(new \Middlewares\Whoops());
+        }
+
         if ($this->errorHandler !== null) {
-            $this->dispatcher->add(new ErrorHandlingMiddleware($this->errorHandler));
+            $this->add(new ErrorHandlingMiddleware($this->errorHandler));
         }
 
         $this->dispatcher->add($this->router->getRouter());

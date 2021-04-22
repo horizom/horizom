@@ -1,9 +1,9 @@
 <?php
 
-namespace Horizom\Error;
+namespace Horizom\Middleware;
 
 use Throwable;
-use Horizom\Error\ErrorHandlerInterface;
+use Horizom\Interfaces\ErrorHandlerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -26,7 +26,7 @@ class ErrorHandlingMiddleware implements MiddlewareInterface
         try {
             return $handler->handle($request);
         } catch (Throwable $e) {
-            return $this->errorHandler->handle($e, $request);
+            return $this->errorHandler->handle($e, $request, $handler);
         }
     }
 }

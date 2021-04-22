@@ -1,7 +1,7 @@
 {
   "name": "horizom/core",
-  "description": "Light PHP framework",
-  "version": "2.1.1",
+  "description": "A light PHP framework",
+  "version": "2.1.2",
   "keywords": [
     "horizon",
     "horizom",
@@ -9,7 +9,7 @@
     "php"
   ],
   "license": "MIT",
-  "homepage": "https://horizom.gitbook.io",
+  "homepage": "https://horizom.github.io",
   "support": {
     "issues": "https://github.com/horizom/core/issues"
   },
@@ -24,7 +24,6 @@
     "http-interop/http-factory-guzzle": "^1.0",
     "illuminate/collections": "^8.0",
     "illuminate/contracts": "^8.0",
-    "illuminate/database": "^8.0",
     "illuminate/support": "^8.0",
     "illuminate/view": "^8.0",
     "middlewares/request-handler": "^2.0",
@@ -59,7 +58,7 @@
     "sort-packages": true
   },
   "scripts": {
-    "start": "php -S localhost:8000 -t tests/public"
+    "start": "php -S localhost:8001 -t tests/public"
   },
   "minimum-stability": "stable",
   "prefer-stable": true

@@ -60,14 +60,15 @@ final class Response extends BaseResponse
      */
     public function redirect(string $url, ?int $status = null): ResponseInterface
     {
-        $response = $this->responseFactory->createResponse();
-        $response->withHeader('Location', $url);
-
         if ($status === null) {
             $status = 302;
         }
 
-        return $response->withStatus($status);
+        $response = $this->responseFactory->createResponse();
+        $response->withHeader('Location', $url);
+        $response->withStatus($status);
+
+        return $response;
     }
 
     /**
@@ -81,15 +82,16 @@ final class Response extends BaseResponse
      */
     public function redirectWithBaseUrl($url = null, int $status = null): ResponseInterface
     {
-        $url = (is_null($url)) ? HORIZOM_BASE_URL : HORIZOM_BASE_URL . '/' . trim($url, '/');
-        $response = $this->responseFactory->createResponse();
-        $response->withHeader('Location', $url);
-
         if ($status === null) {
             $status = 302;
         }
 
-        return $response->withStatus($status);
+        $url = (is_null($url)) ? HORIZOM_BASE_URL : HORIZOM_BASE_URL . '/' . trim($url, '/');
+        $response = $this->responseFactory->createResponse();
+        $response->withHeader('Location', $url);
+        $response->withStatus($status);
+
+        return $response;
     }
 
     /**
