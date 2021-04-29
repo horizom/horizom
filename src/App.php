@@ -20,7 +20,7 @@ class App
     /**
      * @const string Horizom Framework Version
      */
-    protected const VERSION = '2.1.3';
+    protected const VERSION = '2.1.4';
 
     /**
      * @var array
@@ -198,7 +198,7 @@ class App
      */
     public function run()
     {
-        $request = $this->container->get(\Horizon\Http\Request::class);
+        $request = $this->container->get(\Horizom\Http\Request::class);
 
         if (config('app.display_errors') === true) {
             $this->add(new \Middlewares\Whoops());
