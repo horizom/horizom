@@ -12,6 +12,6 @@
 - [x] Ajout d'un Dispatcher psr15
 - [x] Système de routing
 
-### Update Request.php (29-04-2021)
+### [Update Request.php](https://github.com/horizom/core/commit/23404ed487e0b967b74ab3a9770ccf37ec058818) (29-04-2021)
 
 - Bug sur le port dans l'url de base
