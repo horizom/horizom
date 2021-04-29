@@ -79,10 +79,11 @@ final class Request extends BaseRequest
         $base_path = config('app.base_path');
         $path = trim($base_path, '/');
         $host = $uri->getHost();
+        $port = $uri->getPort();
         $uri_query = $uri->getQuery();
 
-        if ($uri->getPort()) {
-            $host = $host . ':' . $uri->getPort();
+        if (!in_array($port, [80, 443])) {
+            $host = $host . ':' . $port;
         }
 
         $base_uri = ($path) ? $host . '/' . $path : $host;
