@@ -20,7 +20,7 @@ class App
     /**
      * @const string Horizom Framework Version
      */
-    protected const VERSION = '2.1.2';
+    protected const VERSION = '2.1.3';
 
     /**
      * @var array
@@ -100,7 +100,7 @@ class App
 
         $this->basePath = $basePath;
         Factory::setFactory(new FactoryDiscovery(self::GUZZLE_FACTORY));
-        
+
         if ($container === null) {
             $container = new Container();
             $container->set("version", $this->version());
@@ -129,7 +129,7 @@ class App
      */
     public function version()
     {
-        return 'Horizom ('.self::VERSION.') PHP (' . PHP_VERSION .')';
+        return 'Horizom (' . self::VERSION . ') PHP (' . PHP_VERSION . ')';
     }
 
     /**
@@ -137,7 +137,7 @@ class App
      */
     public function configure(string $name): self
     {
-        $config = require HORIZOM_ROOT . '/config/'. $name .'.php';
+        $config = require HORIZOM_ROOT . '/config/' . $name . '.php';
         self::$settings = array_merge(self::$settings, $config);
 
         return $this;
@@ -198,19 +198,21 @@ class App
      */
     public function run()
     {
-        $request = $this->container->get(\Horizom\Http\Request::class);
+        $request = $this->container->get(\Horizon\Http\Request::class);
 
         if (config('app.display_errors') === true) {
             $this->add(new \Middlewares\Whoops());
         }
 
-        if ($this->errorHandler !== null) {
-            $this->add(new ErrorHandlingMiddleware($this->errorHandler));
+        if (config('app.debug') === false) {
+            if ($this->errorHandler !== null) {
+                $this->add(new ErrorHandlingMiddleware($this->errorHandler));
+            }
         }
 
         $this->dispatcher->add($this->router->getRouter());
         $response = $this->dispatcher->dispatch($request);
-        
+
         $this->emit($response);
     }
 

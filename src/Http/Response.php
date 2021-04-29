@@ -64,9 +64,9 @@ final class Response extends BaseResponse
             $status = 302;
         }
 
-        $response = $this->responseFactory->createResponse();
-        $response->withHeader('Location', $url);
-        $response->withStatus($status);
+        $response = $this->responseFactory->createResponse()
+            ->withHeader('Location', $url)
+            ->withStatus($status);
 
         return $response;
     }
@@ -87,9 +87,9 @@ final class Response extends BaseResponse
         }
 
         $url = (is_null($url)) ? HORIZOM_BASE_URL : HORIZOM_BASE_URL . '/' . trim($url, '/');
-        $response = $this->responseFactory->createResponse();
-        $response->withHeader('Location', $url);
-        $response->withStatus($status);
+        $response = $this->responseFactory->createResponse()
+            ->withHeader('Location', $url)
+            ->withStatus($status);
 
         return $response;
     }
@@ -207,7 +207,7 @@ final class Response extends BaseResponse
         } else {
             throw new InvalidArgumentException(
                 'Parameter 1 of Response::withFile() must be a resource, a string ' .
-                'or an instance of Psr\Http\Message\StreamInterface.'
+                    'or an instance of Psr\Http\Message\StreamInterface.'
             );
         }
 
