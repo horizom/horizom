@@ -331,8 +331,6 @@ final class Request extends BaseRequest
 
     /**
      * Determine if the request is the result of an AJAX call.
-     *
-     * @return bool
      */
     public function ajax()
     {
@@ -341,8 +339,6 @@ final class Request extends BaseRequest
 
     /**
      * Determine if the request is the result of an PJAX call.
-     *
-     * @return bool
      */
     public function pjax()
     {
@@ -351,12 +347,18 @@ final class Request extends BaseRequest
 
     /**
      * Determine if the request is the result of an AJAX call.
-     *
-     * @return bool
      */
-    public function isXmlHttpRequest(): bool
+    public function isXmlHttpRequest()
     {
-        return (strtolower($this->getHeader('http-x-requested-with')) === 'xmlhttprequest');
+        $isXhr = false;
+        $headerX = $this->getHeader('http-x-requested-with');
+
+        foreach ($headerX as $value) {
+            $isXhr = strtolower($value) === 'xmlhttprequest';
+            break;
+        }
+
+        return $isXhr;
     }
 
     /**
