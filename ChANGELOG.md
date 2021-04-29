@@ -12,6 +12,6 @@
 - [x] Ajout d'un Dispatcher psr15
 - [x] Système de routing
 
-### Commit 04-05-2020
+### Update Request.php (29-04-2021)
 
-- [x] Ajout d'un Dispatcher psr15
+- Bug sur le port dans l'url de base
