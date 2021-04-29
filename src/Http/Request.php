@@ -160,8 +160,6 @@ final class Request extends BaseRequest
 
     /**
      * Access values from entire request payload (including the query string)
-     * 
-     * @return null
      */
     public function query()
     {
