@@ -20,7 +20,7 @@ class App
     /**
      * @const string Horizom Framework Version
      */
-    protected const VERSION = '2.1.5';
+    protected const VERSION = '2.1.8';
 
     /**
      * @var array
@@ -34,7 +34,7 @@ class App
 
         'app.base_path' => '',
 
-        'app.url' => 'http://localhost',
+        'app.base_url' => 'http://localhost',
 
         'app.asset_url' => null,
 
@@ -43,10 +43,6 @@ class App
         'app.locale' => 'en',
 
         'app.display_errors' => true,
-
-        'system.redirect.https' => false,
-
-        'system.redirect.www' => false,
     ];
 
     /**
@@ -138,8 +134,15 @@ class App
     public function configure(string $name): self
     {
         $config = require HORIZOM_ROOT . '/config/' . $name . '.php';
-        self::$settings = array_merge(self::$settings, $config);
+        return $this->addConfig($config);
+    }
 
+    /**
+     * Add configuration into the application.
+     */
+    public function addConfig(array $config)
+    {
+        self::$settings = array_merge(self::$settings, $config);
         return $this;
     }
 
@@ -210,7 +213,7 @@ class App
             }
         }
 
-        $this->dispatcher->add($this->router->getRouter());
+        $this->add($this->router->getRouter());
         $response = $this->dispatcher->dispatch($request);
 
         $this->emit($response);
