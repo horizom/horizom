@@ -20,7 +20,7 @@ class App
     /**
      * @const string Horizom Framework Version
      */
-    protected const VERSION = '2.1.8';
+    protected const VERSION = '2.1.9';
 
     /**
      * @var array
@@ -111,10 +111,15 @@ class App
     }
 
     /**
-     * Get Configuration Values
+     * Set or Get Configuration Values
      */
-    public static function config()
+    public static function config(array $config = null)
     {
+        if ($config !== null) {
+            self::$settings = array_merge(self::$settings, $config);
+            return false;
+        }
+
         return self::$settings;
     }
 
