@@ -20,7 +20,7 @@ class App
     /**
      * @const string Horizom Framework Version
      */
-    protected const VERSION = '2.1.9';
+    protected const VERSION = '2.1.10';
 
     /**
      * @var array
@@ -30,8 +30,6 @@ class App
 
         'app.env' => 'development',
 
-        'app.debug' => false,
-
         'app.base_path' => '',
 
         'app.base_url' => 'http://localhost',
@@ -40,9 +38,9 @@ class App
 
         'app.timezone' => 'UTC',
 
-        'app.locale' => 'en',
+        'app.locale' => 'en_US',
 
-        'app.display_errors' => true,
+        'app.debug' => true,
     ];
 
     /**
@@ -208,11 +206,9 @@ class App
     {
         $request = $this->container->get(\Horizom\Http\Request::class);
 
-        if (config('app.display_errors') === true) {
+        if (config('app.debug') === true) {
             $this->add(new \Middlewares\Whoops());
-        }
-
-        if (config('app.debug') === false) {
+        } else {
             if ($this->errorHandler !== null) {
                 $this->add(new ErrorHandlingMiddleware($this->errorHandler));
             }
