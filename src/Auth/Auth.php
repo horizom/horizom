@@ -31,8 +31,8 @@ use Horizom\Auth\Exception\DuplicateUsernameException;
 use Horizom\Auth\Exception\InvalidSelectorTokenPairException;
 
 /** Component that provides all features and utilities for secure authentication of individual users */
-final class Auth extends UserManager {
-
+final class Auth extends UserManager
+{
 	const COOKIE_PREFIXES = [ Cookie::PREFIX_SECURE, Cookie::PREFIX_HOST ];
 	const COOKIE_CONTENT_SEPARATOR = '~';
 
@@ -44,6 +44,14 @@ final class Auth extends UserManager {
 	private $sessionResyncInterval;
 	/** @var string the name of the cookie used for the 'remember me' feature */
 	private $rememberCookieName;
+	/** @var array auth database table stack */
+	private static $tables = [
+		'users' => 'users',
+		'confirmations' => 'users_confirmations',
+		'remembered' => 'users_remembered',
+		'resets' => 'users_resets',
+		'throttling' => 'users_throttling',
+	];
 
 	/**
 	 * @param PdoDatabase|PdoDsn|\PDO $databaseConnection the database connection to operate on
@@ -53,8 +61,12 @@ final class Auth extends UserManager {
 	 * @param int|null $sessionResyncInterval (optional) the interval in seconds after which to resynchronize the session data with its authoritative source in the database
 	 * @param string|null $dbSchema (optional) the schema name for all database tables used by this component
 	 */
-	public function __construct($databaseConnection, $ipAddress = null, $dbTablePrefix = null, $throttling = null, $sessionResyncInterval = null, $dbSchema = null) {
+	public function __construct($databaseConnection, array $tables = null, $ipAddress = null, $dbTablePrefix = null, $throttling = null, $sessionResyncInterval = null, $dbSchema = null) {
 		parent::__construct($databaseConnection, $dbTablePrefix, $dbSchema);
+
+		if ($tables !== null) {
+			self::$tables = $tables;
+		}
 
 		$this->ipAddress = !empty($ipAddress) ? $ipAddress : (isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : null);
 		$this->throttling = isset($throttling) ? (bool) $throttling : true;
@@ -127,7 +139,7 @@ final class Auth extends UserManager {
 				if (!empty($parts[0]) && !empty($parts[1])) {
 					try {
 						$rememberData = $this->db->selectRow(
-							'SELECT a.user, a.token, a.expires, b.email, b.username, b.status, b.roles_mask, b.force_logout FROM ' . $this->makeTableName('users_remembered') . ' AS a JOIN ' . $this->makeTableName('users') . ' AS b ON a.user = b.id WHERE a.selector = ?',
+							'SELECT a.user, a.token, a.expires, b.email, b.username, b.status, b.roles_mask, b.force_logout FROM ' . $this->makeTableName(self::$tables['remembered']) . ' AS a JOIN ' . $this->makeTableName(self::$tables['users']) . ' AS b ON a.user = b.id WHERE a.selector = ?',
 							[ $parts[0] ]
 						);
 					}
@@ -169,7 +181,7 @@ final class Auth extends UserManager {
 				// fetch the authoritative data from the database again
 				try {
 					$authoritativeData = $this->db->selectRow(
-						'SELECT email, username, status, roles_mask, force_logout FROM ' . $this->makeTableName('users') . ' WHERE id = ?',
+						'SELECT email, username, status, roles_mask, force_logout FROM ' . $this->makeTableName(self::$tables['users']) . ' WHERE id = ?',
 						[ $this->getUserId() ]
 					);
 				}
@@ -366,7 +378,7 @@ final class Auth extends UserManager {
 
 			try {
 				$expectedHash = $this->db->selectValue(
-					'SELECT password FROM ' . $this->makeTableName('users') . ' WHERE id = ?',
+					'SELECT password FROM ' . $this->makeTableName(self::$tables['users']) . ' WHERE id = ?',
 					[ $this->getUserId() ]
 				);
 			}
@@ -509,7 +521,7 @@ final class Auth extends UserManager {
 
 		try {
 			$this->db->insert(
-				$this->makeTableNameComponents('users_remembered'),
+				$this->makeTableNameComponents(self::$tables['remembered']),
 				[
 					'user' => $userId,
 					'selector' => $selector,
@@ -579,7 +591,7 @@ final class Auth extends UserManager {
 		// update the timestamp of the user's last login
 		try {
 			$this->db->update(
-				$this->makeTableNameComponents('users'),
+				$this->makeTableNameComponents(self::$tables['users']),
 				[ 'last_login' => \time() ],
 				[ 'id' => $userId ]
 			);
@@ -633,7 +645,7 @@ final class Auth extends UserManager {
 
 		try {
 			$confirmationData = $this->db->selectRow(
-				'SELECT a.id, a.user_id, a.email AS new_email, a.token, a.expires, b.email AS old_email FROM ' . $this->makeTableName('users_confirmations') . ' AS a JOIN ' . $this->makeTableName('users') . ' AS b ON b.id = a.user_id WHERE a.selector = ?',
+				'SELECT a.id, a.user_id, a.email AS new_email, a.token, a.expires, b.email AS old_email FROM ' . $this->makeTableName(self::$tables['confirmations']) . ' AS a JOIN ' . $this->makeTableName(self::$tables['users']) . ' AS b ON b.id = a.user_id WHERE a.selector = ?',
 				[ $selector ]
 			);
 		}
@@ -647,7 +659,7 @@ final class Auth extends UserManager {
 					// invalidate any potential outstanding password reset requests
 					try {
 						$this->db->delete(
-							$this->makeTableNameComponents('users_resets'),
+							$this->makeTableNameComponents(self::$tables['resets']),
 							[ 'user' => $confirmationData['user_id'] ]
 						);
 					}
@@ -658,7 +670,7 @@ final class Auth extends UserManager {
 					// mark the email address as verified (and possibly update it to the new address given)
 					try {
 						$this->db->update(
-							$this->makeTableNameComponents('users'),
+							$this->makeTableNameComponents(self::$tables['users']),
 							[
 								'email' => $confirmationData['new_email'],
 								'verified' => 1
@@ -685,7 +697,7 @@ final class Auth extends UserManager {
 					// consume the token just being used for confirmation
 					try {
 						$this->db->delete(
-							$this->makeTableNameComponents('users_confirmations'),
+							$this->makeTableNameComponents(self::$tables['confirmations']),
 							[ 'id' => $confirmationData['id'] ]
 						);
 					}
@@ -830,7 +842,7 @@ final class Auth extends UserManager {
 
 			try {
 				$existingUsersWithNewEmail = $this->db->selectValue(
-					'SELECT COUNT(*) FROM ' . $this->makeTableName('users') . ' WHERE email = ?',
+					'SELECT COUNT(*) FROM ' . $this->makeTableName(self::$tables['users']) . ' WHERE email = ?',
 					[ $newEmail ]
 				);
 			}
@@ -844,7 +856,7 @@ final class Auth extends UserManager {
 
 			try {
 				$verified = $this->db->selectValue(
-					'SELECT verified FROM ' . $this->makeTableName('users') . ' WHERE id = ?',
+					'SELECT verified FROM ' . $this->makeTableName(self::$tables['users']) . ' WHERE id = ?',
 					[ $this->getUserId() ]
 				);
 			}
@@ -932,7 +944,7 @@ final class Auth extends UserManager {
 	private function resendConfirmationForColumnValue($columnName, $columnValue, callable $callback) {
 		try {
 			$latestAttempt = $this->db->selectRow(
-				'SELECT user_id, email FROM ' . $this->makeTableName('users_confirmations') . ' WHERE ' . $columnName . ' = ? ORDER BY id DESC LIMIT 1 OFFSET 0',
+				'SELECT user_id, email FROM ' . $this->makeTableName(self::$tables['confirmations']) . ' WHERE ' . $columnName . ' = ? ORDER BY id DESC LIMIT 1 OFFSET 0',
 				[ $columnValue ]
 			);
 		}
@@ -1150,7 +1162,7 @@ final class Auth extends UserManager {
 		try {
 			$projection = \implode(', ', $requestedColumns);
 			$userData = $this->db->selectRow(
-				'SELECT ' . $projection . ' FROM ' . $this->makeTableName('users') . ' WHERE email = ?',
+				'SELECT ' . $projection . ' FROM ' . $this->makeTableName(self::$tables['users']) . ' WHERE email = ?',
 				[ $email ]
 			);
 		}
@@ -1176,7 +1188,7 @@ final class Auth extends UserManager {
 	private function getOpenPasswordResetRequests($userId) {
 		try {
 			$requests = $this->db->selectValue(
-				'SELECT COUNT(*) FROM ' . $this->makeTableName('users_resets') . ' WHERE user = ? AND expires > ?',
+				'SELECT COUNT(*) FROM ' . $this->makeTableName(self::$tables['resets']) . ' WHERE user = ? AND expires > ?',
 				[
 					$userId,
 					\time()
@@ -1219,7 +1231,7 @@ final class Auth extends UserManager {
 
 		try {
 			$this->db->insert(
-				$this->makeTableNameComponents('users_resets'),
+				$this->makeTableNameComponents(self::$tables['resets']),
 				[
 					'user' => $userId,
 					'selector' => $selector,
@@ -1268,7 +1280,7 @@ final class Auth extends UserManager {
 
 		try {
 			$resetData = $this->db->selectRow(
-				'SELECT a.id, a.user, a.token, a.expires, b.email, b.resettable FROM ' . $this->makeTableName('users_resets') . ' AS a JOIN ' . $this->makeTableName('users') . ' AS b ON b.id = a.user WHERE a.selector = ?',
+				'SELECT a.id, a.user, a.token, a.expires, b.email, b.resettable FROM ' . $this->makeTableName(self::$tables['resets']) . ' AS a JOIN ' . $this->makeTableName(self::$tables['users']) . ' AS b ON b.id = a.user WHERE a.selector = ?',
 				[ $selector ]
 			);
 		}
@@ -1286,7 +1298,7 @@ final class Auth extends UserManager {
 
 						try {
 							$this->db->delete(
-								$this->makeTableNameComponents('users_resets'),
+								$this->makeTableNameComponents(self::$tables['resets']),
 								[ 'id' => $resetData['id'] ]
 							);
 						}
@@ -1439,7 +1451,7 @@ final class Auth extends UserManager {
 		if ($this->isLoggedIn()) {
 			try {
 				$this->db->update(
-					$this->makeTableNameComponents('users'),
+					$this->makeTableNameComponents(self::$tables['users']),
 					[
 						'resettable' => $enabled ? 1 : 0
 					],
@@ -1468,7 +1480,7 @@ final class Auth extends UserManager {
 		if ($this->isLoggedIn()) {
 			try {
 				$enabled = $this->db->selectValue(
-					'SELECT resettable FROM ' . $this->makeTableName('users') . ' WHERE id = ?',
+					'SELECT resettable FROM ' . $this->makeTableName(self::$tables['users']) . ' WHERE id = ?',
 					[ $this->getUserId() ]
 				);
 
@@ -1775,7 +1787,7 @@ final class Auth extends UserManager {
 
 		try {
 			$bucket = $this->db->selectRow(
-				'SELECT tokens, replenished_at FROM ' . $this->makeTableName('users_throttling') . ' WHERE bucket = ?',
+				'SELECT tokens, replenished_at FROM ' . $this->makeTableName(self::$tables['throttling']) . ' WHERE bucket = ?',
 				[ $key ]
 			);
 		}
@@ -1812,7 +1824,7 @@ final class Auth extends UserManager {
 			// merge the updated bucket into the database
 			try {
 				$affected = $this->db->update(
-					$this->makeTableNameComponents('users_throttling'),
+					$this->makeTableNameComponents(self::$tables['throttling']),
 					$bucket,
 					[ 'bucket' => $key ]
 				);
@@ -1826,7 +1838,7 @@ final class Auth extends UserManager {
 
 				try {
 					$this->db->insert(
-						$this->makeTableNameComponents('users_throttling'),
+						$this->makeTableNameComponents(self::$tables['throttling']),
 						$bucket
 					);
 				}
@@ -1856,7 +1868,7 @@ final class Auth extends UserManager {
 	 * @return Administration
 	 */
 	public function admin() {
-		return new Administration($this->db, $this->dbTablePrefix, $this->dbSchema);
+		return new Administration($this->db, self::$tables, $this->dbTablePrefix, $this->dbSchema);
 	}
 
 	/**
@@ -1952,7 +1964,7 @@ final class Auth extends UserManager {
 			if (isset($existingSelector)) {
 				// fetch the expiry date for the given selector
 				$existingExpiry = $this->db->selectValue(
-					'SELECT expires FROM ' . $this->makeTableName('users_remembered') . ' WHERE selector = ? AND user = ?',
+					'SELECT expires FROM ' . $this->makeTableName(self::$tables['remembered']) . ' WHERE selector = ? AND user = ?',
 					[
 						$existingSelector,
 						$this->getUserId()

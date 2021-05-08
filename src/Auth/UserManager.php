@@ -50,6 +50,14 @@ abstract class UserManager {
 	protected $dbSchema;
 	/** @var string the prefix for the names of all database tables used by this component */
 	protected $dbTablePrefix;
+	/** @var array auth database table stack */
+	private static $tables = [
+		'users' => 'users',
+		'confirmations' => 'users_confirmations',
+		'remembered' => 'users_remembered',
+		'resets' => 'users_resets',
+		'throttling' => 'users_throttling',
+	];
 
 	/**
 	 * Creates a random string with the given maximum length
@@ -75,7 +83,7 @@ abstract class UserManager {
 	 * @param string|null $dbTablePrefix (optional) the prefix for the names of all database tables used by this component
 	 * @param string|null $dbSchema (optional) the schema name for all database tables used by this component
 	 */
-	protected function __construct($databaseConnection, $dbTablePrefix = null, $dbSchema = null) {
+	protected function __construct($databaseConnection, array $tables = null, $dbTablePrefix = null, $dbSchema = null) {
 		if ($databaseConnection instanceof PdoDatabase) {
 			$this->db = $databaseConnection;
 		}
@@ -89,6 +97,10 @@ abstract class UserManager {
 			$this->db = null;
 
 			throw new \InvalidArgumentException('The database connection must be an instance of either `PdoDatabase`, `PdoDsn` or `PDO`');
+		}
+
+		if ($tables !== null) {
+			self::$tables = $tables;
 		}
 
 		$this->dbSchema = $dbSchema !== null ? (string) $dbSchema : null;
@@ -145,7 +157,7 @@ abstract class UserManager {
 			if ($username !== null) {
 				// count the number of users who do already have that specified username
 				$occurrencesOfUsername = $this->db->selectValue(
-					'SELECT COUNT(*) FROM ' . $this->makeTableName('users') . ' WHERE username = ?',
+					'SELECT COUNT(*) FROM ' . $this->makeTableName(self::$tables['users']) . ' WHERE username = ?',
 					[ $username ]
 				);
 
@@ -162,7 +174,7 @@ abstract class UserManager {
 
 		try {
 			$this->db->insert(
-				$this->makeTableNameComponents('users'),
+				$this->makeTableNameComponents(self::$tables['users']),
 				[
 					'email' => $email,
 					'password' => $password,
@@ -202,7 +214,7 @@ abstract class UserManager {
 
 		try {
 			$affected = $this->db->update(
-				$this->makeTableNameComponents('users'),
+				$this->makeTableNameComponents(self::$tables['users']),
 				[ 'password' => $newPassword ],
 				[ 'id' => $userId ]
 			);
@@ -263,7 +275,7 @@ abstract class UserManager {
 			$projection = \implode(', ', $requestedColumns);
 
 			$users = $this->db->select(
-				'SELECT ' . $projection . ' FROM ' . $this->makeTableName('users') . ' WHERE username = ? LIMIT 2 OFFSET 0',
+				'SELECT ' . $projection . ' FROM ' . $this->makeTableName(self::$tables['users']) . ' WHERE username = ? LIMIT 2 OFFSET 0',
 				[ $username ]
 			);
 		}
@@ -350,7 +362,7 @@ abstract class UserManager {
 
 		try {
 			$this->db->insert(
-				$this->makeTableNameComponents('users_confirmations'),
+				$this->makeTableNameComponents(self::$tables['confirmations']),
 				[
 					'user_id' => (int) $userId,
 					'email' => $email,
@@ -390,7 +402,7 @@ abstract class UserManager {
 
 		try {
 			$this->db->delete(
-				$this->makeTableNameComponents('users_remembered'),
+				$this->makeTableNameComponents(self::$tables['remembered']),
 				$whereMappings
 			);
 		}
@@ -408,7 +420,7 @@ abstract class UserManager {
 	protected function forceLogoutForUserById($userId) {
 		$this->deleteRememberDirectiveForUserById($userId);
 		$this->db->exec(
-			'UPDATE ' . $this->makeTableName('users') . ' SET force_logout = force_logout + 1 WHERE id = ?',
+			'UPDATE ' . $this->makeTableName(self::$tables['users']) . ' SET force_logout = force_logout + 1 WHERE id = ?',
 			[ $userId ]
 		);
 	}
