@@ -82,7 +82,7 @@ final class Request extends BaseRequest
         $port = $uri->getPort();
         $uri_query = $uri->getQuery();
 
-        if (!in_array($port, [80, 443])) {
+        if ($port && !in_array($port, [80, 443])) {
             $host = $host . ':' . $port;
         }
 

@@ -1,68 +1,71 @@
 {
-    "name": "horizom/core",
-    "description": "A light PHP framework",
-    "version": "2.2",
-    "keywords": [
-        "horizon",
-        "horizom",
-        "framework",
-        "php"
-    ],
-    "license": "MIT",
-    "homepage": "https://horizom.github.io",
-    "support": {
-        "issues": "https://github.com/horizom/core/issues"
+  "name": "horizom/core",
+  "description": "A light PHP framework",
+  "version": "2.3.0",
+  "keywords": [
+    "horizon",
+    "horizom",
+    "framework",
+    "php"
+  ],
+  "license": "MIT",
+  "homepage": "https://horizom.github.io",
+  "support": {
+    "issues": "https://github.com/horizom/core/issues"
+  },
+  "authors": [
+    {
+      "name": "Horizom Team",
+      "email": "horizom.team@gmail.com"
     },
-    "authors": [{
-        "name": "Horizom Team",
-        "email": "horizom.team@gmail.com"
-    }, {
-        "name": "Codec Solutions",
-        "email": "infos@codecci.com"
-    }],
-    "require": {
-        "php": "^7.4 || ^8.0",
-        "filp/whoops": "^2.7",
-        "guzzlehttp/psr7": "^1.7",
-        "http-interop/http-factory-guzzle": "^1.0",
-        "illuminate/collections": "^8.0",
-        "illuminate/contracts": "^8.0",
-        "illuminate/support": "^8.0",
-        "illuminate/view": "^8.0",
-        "middlewares/request-handler": "^2.0",
-        "middlewares/utils": "^3.2",
-        "middlewares/whoops": "^2.0",
-        "nikic/fast-route": "^1.3",
-        "php-di/invoker": "^2.1",
-        "php-di/php-di": "^6.0",
-        "php-http/message-factory": "^1.0",
-        "psr/container": "^1.0",
-        "psr/http-factory": "^1.0",
-        "psr/http-message": "^1.0",
-        "psr/http-server-handler": "^1.0"
+    {
+      "name": "Codec Solutions",
+      "email": "infos@codecci.com"
+    }
+  ],
+  "require": {
+    "php": "^7.4 || ^8.0",
+    "filp/whoops": "^2.7",
+    "guzzlehttp/psr7": "^1.7",
+    "http-interop/http-factory-guzzle": "^1.0",
+    "illuminate/collections": "^8.0",
+    "illuminate/contracts": "^8.0",
+    "illuminate/support": "^8.0",
+    "illuminate/view": "^8.0",
+    "middlewares/request-handler": "^2.0",
+    "middlewares/utils": "^3.2",
+    "middlewares/whoops": "^2.0",
+    "nikic/fast-route": "^1.3",
+    "php-di/invoker": "^2.1",
+    "php-di/php-di": "^6.0",
+    "php-http/message-factory": "^1.0",
+    "psr/container": "^1.0",
+    "psr/http-factory": "^1.0",
+    "psr/http-message": "^1.0",
+    "psr/http-server-handler": "^1.0"
+  },
+  "require-dev": {
+    "digitalnature/php-ref": "^1.3"
+  },
+  "autoload": {
+    "psr-4": {
+      "Horizom\\": "src/"
     },
-    "require-dev": {
-        "digitalnature/php-ref": "^1.3"
-    },
-    "autoload": {
-        "psr-4": {
-            "Horizom\\": "src/"
-        },
-        "files": [
-            "src/helpers.php"
-        ]
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "App\\": "tests/app/"
-        }
-    },
-    "config": {
-        "sort-packages": true
-    },
-    "scripts": {
-        "start": "php -S localhost:8001 -t tests/public"
-    },
-    "minimum-stability": "stable",
-    "prefer-stable": true
+    "files": [
+      "src/helpers.php"
+    ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "App\\": "tests/app/"
+    }
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "scripts": {
+    "start": "php -S localhost:8001 -t tests/public"
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
 }

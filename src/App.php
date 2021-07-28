@@ -56,7 +56,7 @@ class App
     /**
      * @var ContainerInterface
      */
-    private $container;
+    private static $container;
 
     /**
      * @var Dispatcher
@@ -86,6 +86,11 @@ class App
     ];
 
     /**
+     * @var App
+     */
+    private static $_instance;
+
+    /**
      * Create new application
      */
     public function __construct(string $basePath = '', ContainerInterface $container = null)
@@ -105,7 +110,31 @@ class App
 
         $this->dispatcher = new Dispatcher([], $resolver);
         $this->router = (new RouteCollectorFactory())->create($container);
-        $this->container = $container;
+
+        self::$container = $container;
+        self::$_instance = $this;
+    }
+
+    /**
+     * Retourne l'instance de la class
+     * 
+     * @return Self
+     */
+    public static function getInstance()
+    {
+        if (is_null(self::$_instance)) {
+            self::$_instance = new Self();
+        }
+
+        return self::$_instance;
+    }
+
+    /**
+     * Finds an entry of the container by its identifier and returns it.
+     */
+    public function get(string $id)
+    {
+        return self::$container->get($id);
     }
 
     /**
@@ -150,11 +179,11 @@ class App
     }
 
     /**
-     * @return \DI\Container
+     * Dependency Injection Container.
      */
-    public function getContainer()
+    public function container()
     {
-        return $this->container;
+        return self::$container;
     }
 
     /**
@@ -188,7 +217,7 @@ class App
     }
 
     /**
-     * Register a new middleware
+     * Register a new middleware in stack
      * 
      * @param MiddlewareInterface|string|callable $middleware
      * @return self
@@ -204,7 +233,7 @@ class App
      */
     public function run()
     {
-        $request = $this->container->get(\Horizom\Http\Request::class);
+        $request = self::$container->get(\Horizom\Http\Request::class);
 
         if (config('app.debug') === true) {
             $this->add(new \Middlewares\Whoops());

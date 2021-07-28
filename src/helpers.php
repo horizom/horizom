@@ -2,7 +2,18 @@
 
 use Horizom\App;
 use Horizom\Http\Response;
-use Horizom\UrlGenerator;
+use Illuminate\Support\Facades\Hash;
+
+if (!function_exists('url')) {
+    /**
+     * Generate a URL.
+     */
+    function url(string $path = null)
+    {
+        $base_url = trim(HORIZOM_BASE_URL, '/');
+        return ($path) ? $base_url . '/' . trim($path, '/') : $base_url;
+    }
+}
 
 if (!function_exists('asset')) {
     /**
@@ -12,21 +23,6 @@ if (!function_exists('asset')) {
     {
         $base_url = trim(HORIZOM_BASE_URL, '/');
         return ($path) ? $base_url . '/' . $path : $base_url;
-    }
-}
-
-if (!function_exists('url')) {
-    /**
-     * Generate a URL for an asset using the current scheme of the request (HTTP or HTTPS).
-     */
-    function url(string $path = null)
-    {
-        // if ($path === null) {
-        //     return new UrlGenerator();
-        // }
-
-        $base_url = trim(HORIZOM_BASE_URL, '/');
-        return ($path) ? $base_url . '/' . trim($path, '/') : $base_url;
     }
 }
 
@@ -52,8 +48,8 @@ if (!function_exists('response')) {
         array $headers = [],
         $body = null,
         $version = '1.1',
-        $reason = null)
-    {
+        $reason = null
+    ) {
         return new Response($status, $headers, $body, $version, $reason);
     }
 }
@@ -92,5 +88,25 @@ if (!function_exists('debug')) {
     {
         var_dump($var);
         die;
+    }
+}
+
+if (!function_exists('app')) {
+    /**
+     * Application
+     */
+    function app()
+    {
+        return App::getInstance();
+    }
+}
+
+if (!function_exists('bcrypt')) {
+    /**
+     * Hashes the given value using Bcrypt.
+     */
+    function bcrypt(string $value)
+    {
+        return Hash::make($value);
     }
 }

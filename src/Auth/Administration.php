@@ -32,8 +32,9 @@ final class Administration extends UserManager
 	 * @param string|null $dbTablePrefix (optional) the prefix for the names of all database tables used by this component
 	 * @param string|null $dbSchema (optional) the schema name for all database tables used by this component
 	 */
-	public function __construct($databaseConnection, array $tables = null, $dbTablePrefix = null, $dbSchema = null) {
-		parent::__construct($databaseConnection, $dbTablePrefix, $dbSchema);
+	public function __construct($databaseConnection, array $tables = null, $dbTablePrefix = null, $dbSchema = null)
+	{
+		parent::__construct($databaseConnection, $tables, $dbTablePrefix, $dbSchema);
 
 		if ($tables !== null) {
 			self::$tables = $tables;
@@ -52,7 +53,8 @@ final class Administration extends UserManager
 	 * @throws UserAlreadyExistsException if a user with the specified email address already exists
 	 * @throws AuthError if an internal problem occurred (do *not* catch)
 	 */
-	public function createUser($email, $password, $username = null) {
+	public function createUser($email, $password, $username = null)
+	{
 		return $this->createUserInternal(false, $email, $password, $username, null);
 	}
 
@@ -69,7 +71,8 @@ final class Administration extends UserManager
 	 * @throws DuplicateUsernameException if the specified username wasn't unique
 	 * @throws AuthError if an internal problem occurred (do *not* catch)
 	 */
-	public function createUserWithUniqueUsername($email, $password, $username = null) {
+	public function createUserWithUniqueUsername($email, $password, $username = null)
+	{
 		return $this->createUserInternal(true, $email, $password, $username, null);
 	}
 
@@ -82,7 +85,8 @@ final class Administration extends UserManager
 	 * @throws UnknownIdException if no user with the specified ID has been found
 	 * @throws AuthError if an internal problem occurred (do *not* catch)
 	 */
-	public function deleteUserById($id) {
+	public function deleteUserById($id)
+	{
 		$numberOfDeletedUsers = $this->deleteUsersByColumnValue('id', (int) $id);
 
 		if ($numberOfDeletedUsers === 0) {
@@ -99,7 +103,8 @@ final class Administration extends UserManager
 	 * @throws InvalidEmailException if no user with the specified email address has been found
 	 * @throws AuthError if an internal problem occurred (do *not* catch)
 	 */
-	public function deleteUserByEmail($email) {
+	public function deleteUserByEmail($email)
+	{
 		$email = self::validateEmailAddress($email);
 
 		$numberOfDeletedUsers = $this->deleteUsersByColumnValue('email', $email);
@@ -119,10 +124,11 @@ final class Administration extends UserManager
 	 * @throws AmbiguousUsernameException if multiple users with the specified username have been found
 	 * @throws AuthError if an internal problem occurred (do *not* catch)
 	 */
-	public function deleteUserByUsername($username) {
+	public function deleteUserByUsername($username)
+	{
 		$userData = $this->getUserDataByUsername(
 			\trim($username),
-			[ 'id' ]
+			['id']
 		);
 
 		$this->deleteUsersByColumnValue('id', (int) $userData['id']);
@@ -139,7 +145,8 @@ final class Administration extends UserManager
 	 *
 	 * @see Role
 	 */
-	public function addRoleForUserById($userId, $role) {
+	public function addRoleForUserById($userId, $role)
+	{
 		$userFound = $this->addRoleForUserByColumnValue(
 			'id',
 			(int) $userId,
@@ -162,7 +169,8 @@ final class Administration extends UserManager
 	 *
 	 * @see Role
 	 */
-	public function addRoleForUserByEmail($userEmail, $role) {
+	public function addRoleForUserByEmail($userEmail, $role)
+	{
 		$userEmail = self::validateEmailAddress($userEmail);
 
 		$userFound = $this->addRoleForUserByColumnValue(
@@ -188,10 +196,11 @@ final class Administration extends UserManager
 	 *
 	 * @see Role
 	 */
-	public function addRoleForUserByUsername($username, $role) {
+	public function addRoleForUserByUsername($username, $role)
+	{
 		$userData = $this->getUserDataByUsername(
 			\trim($username),
-			[ 'id' ]
+			['id']
 		);
 
 		$this->addRoleForUserByColumnValue(
@@ -212,7 +221,8 @@ final class Administration extends UserManager
 	 *
 	 * @see Role
 	 */
-	public function removeRoleForUserById($userId, $role) {
+	public function removeRoleForUserById($userId, $role)
+	{
 		$userFound = $this->removeRoleForUserByColumnValue(
 			'id',
 			(int) $userId,
@@ -235,7 +245,8 @@ final class Administration extends UserManager
 	 *
 	 * @see Role
 	 */
-	public function removeRoleForUserByEmail($userEmail, $role) {
+	public function removeRoleForUserByEmail($userEmail, $role)
+	{
 		$userEmail = self::validateEmailAddress($userEmail);
 
 		$userFound = $this->removeRoleForUserByColumnValue(
@@ -261,10 +272,11 @@ final class Administration extends UserManager
 	 *
 	 * @see Role
 	 */
-	public function removeRoleForUserByUsername($username, $role) {
+	public function removeRoleForUserByUsername($username, $role)
+	{
 		$userData = $this->getUserDataByUsername(
 			\trim($username),
-			[ 'id' ]
+			['id']
 		);
 
 		$this->removeRoleForUserByColumnValue(
@@ -284,7 +296,8 @@ final class Administration extends UserManager
 	 *
 	 * @see Role
 	 */
-	public function doesUserHaveRole($userId, $role) {
+	public function doesUserHaveRole($userId, $role)
+	{
 		if (empty($role) || !\is_numeric($role)) {
 			return false;
 		}
@@ -293,7 +306,7 @@ final class Administration extends UserManager
 
 		$rolesBitmask = $this->db->selectValue(
 			'SELECT roles_mask FROM ' . $this->makeTableName('users') . ' WHERE id = ?',
-			[ $userId ]
+			[$userId]
 		);
 
 		if ($rolesBitmask === null) {
@@ -314,12 +327,13 @@ final class Administration extends UserManager
 	 *
 	 * @see Role
 	 */
-	public function getRolesForUserById($userId) {
+	public function getRolesForUserById($userId)
+	{
 		$userId = (int) $userId;
 
 		$rolesBitmask = $this->db->selectValue(
 			'SELECT roles_mask FROM ' . $this->makeTableName('users') . ' WHERE id = ?',
-			[ $userId ]
+			[$userId]
 		);
 
 		if ($rolesBitmask === null) {
@@ -343,7 +357,8 @@ final class Administration extends UserManager
 	 * @throws EmailNotVerifiedException if the user has not verified their email address via a confirmation method yet
 	 * @throws AuthError if an internal problem occurred (do *not* catch)
 	 */
-	public function logInAsUserById($id) {
+	public function logInAsUserById($id)
+	{
 		$numberOfMatchedUsers = $this->logInAsUserByColumnValue('id', (int) $id);
 
 		if ($numberOfMatchedUsers === 0) {
@@ -359,7 +374,8 @@ final class Administration extends UserManager
 	 * @throws EmailNotVerifiedException if the user has not verified their email address via a confirmation method yet
 	 * @throws AuthError if an internal problem occurred (do *not* catch)
 	 */
-	public function logInAsUserByEmail($email) {
+	public function logInAsUserByEmail($email)
+	{
 		$email = self::validateEmailAddress($email);
 
 		$numberOfMatchedUsers = $this->logInAsUserByColumnValue('email', $email);
@@ -378,13 +394,13 @@ final class Administration extends UserManager
 	 * @throws EmailNotVerifiedException if the user has not verified their email address via a confirmation method yet
 	 * @throws AuthError if an internal problem occurred (do *not* catch)
 	 */
-	public function logInAsUserByUsername($username) {
+	public function logInAsUserByUsername($username)
+	{
 		$numberOfMatchedUsers = $this->logInAsUserByColumnValue('username', \trim($username));
 
 		if ($numberOfMatchedUsers === 0) {
 			throw new UnknownUsernameException();
-		}
-		elseif ($numberOfMatchedUsers > 1) {
+		} elseif ($numberOfMatchedUsers > 1) {
 			throw new AmbiguousUsernameException();
 		}
 	}
@@ -398,7 +414,8 @@ final class Administration extends UserManager
 	 * @throws InvalidPasswordException if the desired new password has been invalid
 	 * @throws AuthError if an internal problem occurred (do *not* catch)
 	 */
-	public function changePasswordForUserById($userId, $newPassword) {
+	public function changePasswordForUserById($userId, $newPassword)
+	{
 		$userId = (int) $userId;
 		$newPassword = self::validatePassword($newPassword);
 
@@ -420,10 +437,11 @@ final class Administration extends UserManager
 	 * @throws InvalidPasswordException if the desired new password has been invalid
 	 * @throws AuthError if an internal problem occurred (do *not* catch)
 	 */
-	public function changePasswordForUserByUsername($username, $newPassword) {
+	public function changePasswordForUserByUsername($username, $newPassword)
+	{
 		$userData = $this->getUserDataByUsername(
 			\trim($username),
-			[ 'id' ]
+			['id']
 		);
 
 		$this->changePasswordForUserById(
@@ -442,7 +460,8 @@ final class Administration extends UserManager
 	 * @return int the number of deleted users
 	 * @throws AuthError if an internal problem occurred (do *not* catch)
 	 */
-	private function deleteUsersByColumnValue($columnName, $columnValue) {
+	private function deleteUsersByColumnValue($columnName, $columnValue)
+	{
 		try {
 			return $this->db->delete(
 				$this->makeTableNameComponents('users'),
@@ -450,8 +469,7 @@ final class Administration extends UserManager
 					$columnName => $columnValue
 				]
 			);
-		}
-		catch (Error $e) {
+		} catch (Error $e) {
 			throw new DatabaseError($e->getMessage());
 		}
 	}
@@ -469,14 +487,14 @@ final class Administration extends UserManager
 	 *
 	 * @see Role
 	 */
-	private function modifyRolesForUserByColumnValue($columnName, $columnValue, callable $modification) {
+	private function modifyRolesForUserByColumnValue($columnName, $columnValue, callable $modification)
+	{
 		try {
 			$userData = $this->db->selectRow(
 				'SELECT id, roles_mask FROM ' . $this->makeTableName('users') . ' WHERE ' . $columnName . ' = ?',
-				[ $columnValue ]
+				[$columnValue]
 			);
-		}
-		catch (Error $e) {
+		} catch (Error $e) {
 			throw new DatabaseError($e->getMessage());
 		}
 
@@ -496,8 +514,7 @@ final class Administration extends UserManager
 			);
 
 			return true;
-		}
-		catch (Error $e) {
+		} catch (Error $e) {
 			throw new DatabaseError($e->getMessage());
 		}
 	}
@@ -514,7 +531,8 @@ final class Administration extends UserManager
 	 *
 	 * @see Role
 	 */
-	private function addRoleForUserByColumnValue($columnName, $columnValue, $role) {
+	private function addRoleForUserByColumnValue($columnName, $columnValue, $role)
+	{
 		$role = (int) $role;
 
 		return $this->modifyRolesForUserByColumnValue(
@@ -538,7 +556,8 @@ final class Administration extends UserManager
 	 *
 	 * @see Role
 	 */
-	private function removeRoleForUserByColumnValue($columnName, $columnValue, $role) {
+	private function removeRoleForUserByColumnValue($columnName, $columnValue, $role)
+	{
 		$role = (int) $role;
 
 		return $this->modifyRolesForUserByColumnValue(
@@ -561,14 +580,14 @@ final class Administration extends UserManager
 	 * @throws EmailNotVerifiedException if the user has not verified their email address via a confirmation method yet
 	 * @throws AuthError if an internal problem occurred (do *not* catch)
 	 */
-	private function logInAsUserByColumnValue($columnName, $columnValue) {
+	private function logInAsUserByColumnValue($columnName, $columnValue)
+	{
 		try {
 			$users = $this->db->select(
 				'SELECT verified, id, email, username, status, roles_mask FROM ' . $this->makeTableName('users') . ' WHERE ' . $columnName . ' = ? LIMIT 2 OFFSET 0',
-				[ $columnValue ]
+				[$columnValue]
 			);
-		}
-		catch (Error $e) {
+		} catch (Error $e) {
 			throw new DatabaseError($e->getMessage());
 		}
 
@@ -579,13 +598,11 @@ final class Administration extends UserManager
 
 			if ((int) $user['verified'] === 1) {
 				$this->onLoginSuccessful($user['id'], $user['email'], $user['username'], $user['status'], $user['roles_mask'], \PHP_INT_MAX, false);
-			}
-			else {
+			} else {
 				throw new EmailNotVerifiedException();
 			}
 		}
 
 		return $numberOfMatchingUsers;
 	}
-
 }

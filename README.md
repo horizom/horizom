@@ -14,6 +14,10 @@
 
 Horizom has the most extensive and thorough documentation and video tutorial library of any modern web application framework. The [Horizom documentation](https://horizom.github.io) is in-depth and complete, making it a breeze to get started learning the framework.
 
+## Changelog
+
+All notable changes to this project will be documented in the file [CHANGELOG](CHANGELOG.md).
+
 ## License
 
 The Horizom framework is open-sourced software licensed under the [MIT license](LICENSE.md).
