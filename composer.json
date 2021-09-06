@@ -1,7 +1,7 @@
 {
   "name": "horizom/core",
   "description": "A light PHP framework",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "keywords": [
     "horizon",
     "horizom",
@@ -64,7 +64,7 @@
     "sort-packages": true
   },
   "scripts": {
-    "start": "php -S localhost:8001 -t tests/public"
+    "start": "php -S localhost:8005 -t tests/public"
   },
   "minimum-stability": "stable",
   "prefer-stable": true

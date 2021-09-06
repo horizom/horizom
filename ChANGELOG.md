@@ -5,9 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Commit 06-09-2021 (v2.4.0)
+
+- Suppression de la librairie `Horizom\Auth` qui permettait de gérer l'authentification
+- Ajout de la méthode `any()` dans la classe `Horizom\Routing\RouteCollector`, qui permet de définir une route accessible via toute les méthode.
+- Ajout de la méthode `middleware()` dans la classe `Horizom\Routing\Route`.
+- Ajout de la méthode `name()` dans la classe `Horizom\Routing\Route`.
+- Divers correction de bug
+
 ## Commit 28-07-2021 (v2.3.0)
 
-- Renommage de la methode `getContainer()` en `container()` dans la classe `Horizom\App`
+- Renommage de la méthode `getContainer()` en `container()` dans la classe `Horizom\App`
 - Ajout de la fonction `app()`, qui retourne l'instance de l'application en cours, dans les helpers.
 - Ajout de la fonction `bcrypt()`, pour hacher les chainess de caractères, dans les helpers.
 - Divers correction de bug
@@ -16,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [x] Routing complet basé sur [AuraRouter](http://auraphp.com/packages/3.x/Router)
 - [x] Moteur de template simple et puissant [Blade Template de Laravel](https://laravel.com/docs/5.8/blade)
-- [ ] Système d'injection de dépendance [PHP-DI](http://php-di.org/) (en cours...)
+- [x] Système d'injection de dépendance [PHP-DI](http://php-di.org/) (en cours...)
 - [ ] Documentation de 80% du code source...
 
 ## Commit 04-05-2020

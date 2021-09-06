@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of the Makise-Co Framework
  *
@@ -149,6 +150,33 @@ class Route implements RouteInterface
     public function getAttributes(): array
     {
         return $this->attributes;
+    }
+
+    /**
+     * Specify a name for the route
+     */
+    public function name(string $name): self
+    {
+        $this->checkIsCompiled();
+
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * Add middleware to route
+     *
+     * @param MiddlewareInterface|string $middleware
+     * @return self
+     */
+    public function middleware($middleware): self
+    {
+        $this->checkIsCompiled();
+
+        $this->middlewares[] = $middleware;
+
+        return $this;
     }
 
     /**

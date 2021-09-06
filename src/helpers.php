@@ -4,6 +4,27 @@ use Horizom\App;
 use Horizom\Http\Response;
 use Illuminate\Support\Facades\Hash;
 
+if (!function_exists('app')) {
+    /**
+     * Application
+     */
+    function app()
+    {
+        return App::getInstance();
+    }
+}
+
+if (!function_exists('config')) {
+    /**
+     * Accessing Configuration Values
+     */
+    function config(string $key, $default = null)
+    {
+        $configs = App::config();
+        return isset($configs[$key]) ? $configs[$key] : $default;
+    }
+}
+
 if (!function_exists('url')) {
     /**
      * Generate a URL.
@@ -23,17 +44,6 @@ if (!function_exists('asset')) {
     {
         $base_url = trim(HORIZOM_BASE_URL, '/');
         return ($path) ? $base_url . '/' . $path : $base_url;
-    }
-}
-
-if (!function_exists('config')) {
-    /**
-     * Accessing Configuration Values
-     */
-    function config(string $key, $default = null)
-    {
-        $configs = App::config();
-        return isset($configs[$key]) ? $configs[$key] : $default;
     }
 }
 
@@ -80,6 +90,16 @@ if (!function_exists('view')) {
     }
 }
 
+if (!function_exists('bcrypt')) {
+    /**
+     * Hashes the given value using Bcrypt.
+     */
+    function bcrypt(string $value)
+    {
+        return Hash::make($value);
+    }
+}
+
 if (!function_exists('debug')) {
     /**
      * var_dump & die
@@ -88,25 +108,5 @@ if (!function_exists('debug')) {
     {
         var_dump($var);
         die;
-    }
-}
-
-if (!function_exists('app')) {
-    /**
-     * Application
-     */
-    function app()
-    {
-        return App::getInstance();
-    }
-}
-
-if (!function_exists('bcrypt')) {
-    /**
-     * Hashes the given value using Bcrypt.
-     */
-    function bcrypt(string $value)
-    {
-        return Hash::make($value);
     }
 }

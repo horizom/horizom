@@ -2,15 +2,15 @@
 
 namespace Horizom\Http;
 
-use RuntimeException;
-use InvalidArgumentException;
-use Horizom\View\Blade;
+use Horizom\View;
 use GuzzleHttp\Psr7\Response as BaseResponse;
 use Middlewares\Utils\Factory;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
+use RuntimeException;
+use InvalidArgumentException;
 
 final class Response extends BaseResponse
 {
@@ -106,7 +106,7 @@ final class Response extends BaseResponse
             mkdir($viewCachePath, 0755, true);
         }
 
-        $blade = new Blade($viewPath, $viewCachePath);
+        $blade = new View($viewPath, $viewCachePath);
         $output = (string) $blade->make($name, $data)->render();
         $response = $this->responseFactory->createResponse()
             ->withHeader('Content-type', $contentType)

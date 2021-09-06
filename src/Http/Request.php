@@ -3,12 +3,12 @@
 namespace Horizom\Http;
 
 use RuntimeException;
+use GuzzleHttp\Psr7\ServerRequest as BaseRequest;
 use Horizom\Collection\FilesCollection;
 use Horizom\Collection\ServerCollection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
-use GuzzleHttp\Psr7\ServerRequest as BaseRequest;
 use Psr\Http\Message\UriInterface;
 
 final class Request extends BaseRequest

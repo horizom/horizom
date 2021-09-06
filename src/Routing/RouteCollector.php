@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file is part of the Makise-Co Framework
  *
@@ -99,6 +100,29 @@ class RouteCollector implements RouteCollectorInterface
         }
 
         $this->addGroup($prefix, $parameters, $callback);
+    }
+
+    /**
+     * Register a route that responds to all HTTP methods
+     *
+     * @param string $path
+     * @param callable|\Closure|string|string[] $handler
+     * 
+     * @return Route
+     */
+    public function any(string $path, $handler): RouteInterface
+    {
+        $methods = [
+            RouteInterface::METHOD_GET,
+            RouteInterface::METHOD_POST,
+            RouteInterface::METHOD_PATCH,
+            RouteInterface::METHOD_HEAD,
+            RouteInterface::METHOD_PUT,
+            RouteInterface::METHOD_DELETE,
+            RouteInterface::METHOD_OPTIONS,
+        ];
+
+        return $this->addRoute($methods, $path, $handler);
     }
 
     /**

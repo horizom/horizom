@@ -1,12 +1,12 @@
 <?php
 
-namespace Horizom\View;
+namespace Horizom;
 
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Container\Container as ContainerInterface;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory as FactoryContract;
-use Illuminate\Contracts\View\View;
+use Illuminate\Contracts\View\View as BaseView;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Facade;
@@ -14,7 +14,7 @@ use Illuminate\View\Compilers\BladeCompiler;
 use Illuminate\View\Factory;
 use Illuminate\View\ViewServiceProvider;
 
-class Blade implements FactoryContract
+class View implements FactoryContract
 {
     /**
      * @var Application
@@ -47,7 +47,7 @@ class Blade implements FactoryContract
         return $this->make($view, $data, $mergeData)->render();
     }
 
-    public function make($view, $data = [], $mergeData = []): View
+    public function make($view, $data = [], $mergeData = []): BaseView
     {
         return $this->factory->make($view, $data, $mergeData);
     }
@@ -72,7 +72,7 @@ class Blade implements FactoryContract
         return $this->factory->exists($view);
     }
 
-    public function file($path, $data = [], $mergeData = []): View
+    public function file($path, $data = [], $mergeData = []): BaseView
     {
         return $this->factory->file($path, $data, $mergeData);
     }

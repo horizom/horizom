@@ -130,27 +130,6 @@ class App
     }
 
     /**
-     * Finds an entry of the container by its identifier and returns it.
-     */
-    public function get(string $id)
-    {
-        return self::$container->get($id);
-    }
-
-    /**
-     * Set or Get Configuration Values
-     */
-    public static function config(array $config = null)
-    {
-        if ($config !== null) {
-            self::$settings = array_merge(self::$settings, $config);
-            return false;
-        }
-
-        return self::$settings;
-    }
-
-    /**
      * Get the version number of the application.
      *
      * @return string
@@ -161,21 +140,16 @@ class App
     }
 
     /**
-     * Load a configuration file into the application.
+     * Set or Get Configuration Values into the application.
      */
-    public function configure(string $name): self
+    public static function config(array $config = null)
     {
-        $config = require HORIZOM_ROOT . '/config/' . $name . '.php';
-        return $this->addConfig($config);
-    }
+        if ($config !== null) {
+            self::$settings = array_merge(self::$settings, $config);
+            return null;
+        }
 
-    /**
-     * Add configuration into the application.
-     */
-    public function addConfig(array $config)
-    {
-        self::$settings = array_merge(self::$settings, $config);
-        return $this;
+        return self::$settings;
     }
 
     /**
@@ -184,6 +158,25 @@ class App
     public function container()
     {
         return self::$container;
+    }
+
+    /**
+     * Finds an entry of the container by its identifier and returns it.
+     */
+    public function get(string $id)
+    {
+        return self::$container->get($id);
+    }
+
+    /**
+     * Load a configuration file into the application.
+     */
+    public function configure(string $name): self
+    {
+        $config = require HORIZOM_ROOT . '/config/' . $name . '.php';
+        $this->config($config);
+
+        return $this;
     }
 
     /**
@@ -249,9 +242,6 @@ class App
         $this->emit($response);
     }
 
-    /**
-     * Convert response to string.
-     */
     private function emit(ResponseInterface $response)
     {
         $http_line = sprintf(
