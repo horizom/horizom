@@ -54,7 +54,7 @@ class App
     protected $basePath;
 
     /**
-     * @var ContainerInterface
+     * @var Container
      */
     private static $container;
 
@@ -155,7 +155,7 @@ class App
     /**
      * Dependency Injection Container.
      */
-    public function container()
+    public function container(): Container
     {
         return self::$container;
     }
