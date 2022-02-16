@@ -1,7 +1,7 @@
 {
   "name": "horizom/core",
   "description": "A light PHP framework",
-  "version": "2.4.1",
+  "version": "2.4.2",
   "keywords": [
     "horizon",
     "horizom",
@@ -25,7 +25,7 @@
   ],
   "require": {
     "php": "^7.4 || ^8.0",
-    "filp/whoops": "^2.7",
+    "filp/whoops": "^2.14",
     "guzzlehttp/psr7": "^1.7",
     "http-interop/http-factory-guzzle": "^1.0",
     "illuminate/collections": "^8.0",

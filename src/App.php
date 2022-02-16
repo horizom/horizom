@@ -20,7 +20,7 @@ class App
     /**
      * @const string Horizom Framework Version
      */
-    protected const VERSION = '2.2';
+    protected const VERSION = '2.4.2';
 
     /**
      * @var array
@@ -32,7 +32,7 @@ class App
 
         'app.base_path' => '',
 
-        'app.base_url' => 'http://localhost',
+        'app.base_url' => 'http://localhost:8000',
 
         'app.asset_url' => null,
 
@@ -229,11 +229,21 @@ class App
         $request = self::$container->get(\Horizom\Http\Request::class);
 
         if (config('app.debug') === true) {
-            $this->add(new \Middlewares\Whoops());
-        } else {
-            if ($this->errorHandler !== null) {
-                $this->add(new ErrorHandlingMiddleware($this->errorHandler));
+            $accepts = $request->getHeader('Accept');
+            $whoops = new \Whoops\Run();
+
+            if (
+                !empty($accepts) && $accepts[0] === 'application/json' ||
+                \Whoops\Util\Misc::isAjaxRequest()
+            ) {
+                $whoops->pushHandler(new \Whoops\Handler\JsonResponseHandler());
+            } else {
+                $whoops->pushHandler(new \Whoops\Handler\PrettyPageHandler());
             }
+
+            $this->add(new \Middlewares\Whoops($whoops));
+        } else if ($this->errorHandler !== null) {
+            $this->add(new ErrorHandlingMiddleware($this->errorHandler));
         }
 
         $this->add($this->router->getRouter());
