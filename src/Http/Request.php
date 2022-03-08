@@ -4,8 +4,8 @@ namespace Horizom\Http;
 
 use RuntimeException;
 use GuzzleHttp\Psr7\ServerRequest as BaseRequest;
-use Horizom\Collection\FilesCollection;
-use Horizom\Collection\ServerCollection;
+use Horizom\Http\Collection\FileCollection;
+use Horizom\Http\Collection\ServerCollection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
@@ -75,7 +75,14 @@ final class Request extends BaseRequest
     public function __construct($method, $uri, array $headers = [], $body = null, $version = '1.1', array $serverParams = [])
     {
         parent::__construct($method, $uri, $headers, $body, $version, $serverParams);
+        $this->initialize($uri);
+    }
 
+    /**
+     * @param string|UriInterface $uri URI
+     */
+    private function initialize($uri)
+    {
         $base_path = config('app.base_path');
         $path = trim($base_path, '/');
         $host = $uri->getHost();
@@ -102,7 +109,7 @@ final class Request extends BaseRequest
         $this->query = new Collection($queries);
         $this->post = new Collection($_POST);
         $this->cookie = new Collection($_COOKIE);
-        $this->files = new FilesCollection($_FILES);
+        $this->files = new FileCollection($_FILES);
         $this->server = new ServerCollection($_SERVER);
 
         define("HORIZOM_BASE_PATH", $this->base_path);
@@ -153,50 +160,72 @@ final class Request extends BaseRequest
 
     /**
      * Access all of the user POST input
+     *
+     * @param string $name
      */
-    public function post()
+    public function post(string $name = null)
     {
+        if ($name) {
+            return $this->post->get($name);
+        }
+
         return $this->post;
     }
 
     /**
      * Access values from entire request payload (including the query string)
+     *
+     * @param string $name
      */
-    public function query()
+    public function query(string $name = null)
     {
+        if ($name) {
+            return $this->query->get($name);
+        }
+
         return $this->query;
     }
 
     /**
      * Access uploaded files from the request
+     *
+     * @param string $name
      */
-    public function files(string $name)
+    public function files(string $name = null)
     {
-        return $this->files->row($name);
+        if ($name) {
+            return $this->files->get($name);
+        }
+
+        return $this->files;
     }
 
     /**
      * Access all of the user COOKIE input
+     *
+     * @param string $name
      */
-    public function cookie()
+    public function cookie(string $name = null)
     {
+        if ($name) {
+            return $this->cookie->get($name);
+        }
+
         return $this->cookie;
     }
 
     /**
      * Access all server params
+     *
+     * @param string $name
      */
-    public function server()
+    public function server(string $name = null)
     {
-        return $this->server;
-    }
+        if ($name) {
+            return $this->server->get($name);
+        }
 
-    /**
-     * Determine if a file is present on the request
-     */
-    public function hasFile(string $name)
-    {
-        return $this->files->exists($name);
+        return $this->server;
     }
 
     /**
@@ -296,7 +325,7 @@ final class Request extends BaseRequest
 
     /**
      * Get id address
-     * 
+     *
      * @return string|null
      */
     public function ip()

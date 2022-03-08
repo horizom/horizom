@@ -64,14 +64,46 @@ class Route implements RouteInterface
      * @param string $path
      * @param Closure $handler
      */
-    public function __construct(
-        array $methods,
-        string $path,
-        Closure $handler
-    ) {
+    public function __construct(array $methods, string $path, Closure $handler)
+    {
         $this->methods = $methods;
         $this->path = $path;
         $this->handler = $handler;
+    }
+
+    private function checkIsCompiled(): void
+    {
+        if ($this->isCompiled) {
+            throw new \BadMethodCallException('Route is compiled');
+        }
+    }
+
+    public function isCompiled(): bool
+    {
+        return $this->isCompiled;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function compile(array $args): void
+    {
+        if ($this->isCompiled) {
+            return;
+        }
+
+        $this->isCompiled = true;
+
+        $handler = $args['handler'] ?? null;
+        // support of lazy handler resolution
+        if ($handler instanceof Closure) {
+            $this->handler = $handler;
+        }
+
+        $pipe = $args['pipe'] ?? null;
+        if ($pipe instanceof MiddlewarePipe) {
+            $this->pipe = $pipe;
+        }
     }
 
     public function getName(): string
@@ -114,6 +146,19 @@ class Route implements RouteInterface
         return $this->pipe;
     }
 
+    public function getAttribute(string $key, $default = null)
+    {
+        return $this->attributes[$key] ?? $default;
+    }
+
+    public function getAttributes(): array
+    {
+        return $this->attributes;
+    }
+
+    /**
+     * Set route name
+     */
     public function setName(string $name): self
     {
         $this->checkIsCompiled();
@@ -135,6 +180,9 @@ class Route implements RouteInterface
         return $this;
     }
 
+    /**
+     * @inheritDoc
+     */
     public function withAttribute(string $key, $value): self
     {
         $this->attributes[$key] = $value;
@@ -142,26 +190,12 @@ class Route implements RouteInterface
         return $this;
     }
 
-    public function getAttribute(string $key, $default = null)
-    {
-        return $this->attributes[$key] ?? $default;
-    }
-
-    public function getAttributes(): array
-    {
-        return $this->attributes;
-    }
-
     /**
-     * Specify a name for the route
+     * Set route name
      */
     public function name(string $name): self
     {
-        $this->checkIsCompiled();
-
-        $this->name = $name;
-
-        return $this;
+        return $this->setName($name);
     }
 
     /**
@@ -172,45 +206,19 @@ class Route implements RouteInterface
      */
     public function middleware($middleware): self
     {
-        $this->checkIsCompiled();
-
-        $this->middlewares[] = $middleware;
-
-        return $this;
+        return $this->withMiddleware($middleware);
     }
 
     /**
-     * @inheritDoc
+     * Add attribute to route
+     *
+     * @param string $key
+     * @param mixed $value
+     *
+     * @return self
      */
-    public function compile(array $args): void
+    public function attribute(string $key, $value): self
     {
-        if ($this->isCompiled) {
-            return;
-        }
-
-        $this->isCompiled = true;
-
-        $handler = $args['handler'] ?? null;
-        // support of lazy handler resolution
-        if ($handler instanceof Closure) {
-            $this->handler = $handler;
-        }
-
-        $pipe = $args['pipe'] ?? null;
-        if ($pipe instanceof MiddlewarePipe) {
-            $this->pipe = $pipe;
-        }
-    }
-
-    public function isCompiled(): bool
-    {
-        return $this->isCompiled;
-    }
-
-    private function checkIsCompiled(): void
-    {
-        if ($this->isCompiled) {
-            throw new \BadMethodCallException('Route is compiled');
-        }
+        return $this->withAttribute($key, $value);
     }
 }

@@ -187,10 +187,10 @@ final class Response extends BaseResponse
 
     /**
      * Display a file, such as an image or PDF, directly in the user's browser instead of initiating a download.
-     * 
+     *
      * @param string|resource|StreamInterface $file
      * @param bool|string $contentType
-     * 
+     *
      * @throws RuntimeException If the file cannot be opened.
      * @throws InvalidArgumentException If the mode is invalid.
      */

@@ -1,6 +1,6 @@
 <?php
 
-namespace Horizom\Collection;
+namespace Horizom\Http\Collection;
 
 use Illuminate\Support\Collection;
 
