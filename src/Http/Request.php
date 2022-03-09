@@ -162,6 +162,7 @@ final class Request extends BaseRequest
      * Access all of the user POST input
      *
      * @param string $name
+     * @return mixed|Collection
      */
     public function post(string $name = null)
     {
@@ -176,6 +177,7 @@ final class Request extends BaseRequest
      * Access values from entire request payload (including the query string)
      *
      * @param string $name
+     * @return mixed|Collection
      */
     public function query(string $name = null)
     {
@@ -190,6 +192,7 @@ final class Request extends BaseRequest
      * Access uploaded files from the request
      *
      * @param string $name
+     * @return mixed|FileCollection
      */
     public function files(string $name = null)
     {
@@ -204,6 +207,7 @@ final class Request extends BaseRequest
      * Access all of the user COOKIE input
      *
      * @param string $name
+     * @return mixed|Collection
      */
     public function cookie(string $name = null)
     {
@@ -218,6 +222,7 @@ final class Request extends BaseRequest
      * Access all server params
      *
      * @param string $name
+     * @return mixed|ServerCollection
      */
     public function server(string $name = null)
     {
