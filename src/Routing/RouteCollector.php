@@ -13,6 +13,9 @@ namespace Horizom\Routing;
 
 use FastRoute\DataGenerator;
 use FastRoute\RouteParser;
+use Horizom\Http\Request;
+use Horizom\Http\Response;
+use Psr\Http\Message\ResponseInterface;
 
 use function class_exists;
 use function is_string;
@@ -76,11 +79,115 @@ class RouteCollector implements RouteCollectorInterface
     }
 
     /**
+     * Add a route to the resource collection.
+     *
+     * Example:
+     * - `$router->resource('/posts', 'PostsController::class', ['only' => ['index', 'show']]);` or
+     * - `$router->resource('/posts', 'PostsController::class', ['except' => ['create', 'update']]);`
+     *
+     * @param string $path
+     * @param string $controller
+     * @param array $options
+     */
+    public function resource(string $path, $controller, array $options = [])
+    {
+        $path = trim($path, '/');
+        $prefix = str_replace('/', '.', $path) . '.';
+
+        $this->group(['prefix' => $path], function (RouteCollector $route) use ($prefix, $controller, $options) {
+            if (isset($options['only'])) {
+                $only = $options['only'];
+
+                if (in_array('index', $only)) {
+                    $route->get('/', [$controller, 'index'])->name($prefix . 'index');
+                } else if (in_array('create', $only)) {
+                    $route->get('/create', [$controller, 'create'])->name($prefix . 'create');
+                } else if (in_array('store', $only)) {
+                    $route->post('/', [$controller, 'store'])->name($prefix . 'store');
+                } else if (in_array('show', $only)) {
+                    $route->get('/{id}', [$controller, 'show'])->name($prefix . 'show');
+                } else if (in_array('edit', $only)) {
+                    $route->get('/{id}/edit', [$controller, 'edit'])->name($prefix . 'edit');
+                } else if (in_array('update', $only)) {
+                    $route->put('/{id}', [$controller, 'update'])->name($prefix . 'update');
+                } else if (in_array('destroy', $only)) {
+                    $route->delete('/{id}', [$controller, 'destroy'])->name($prefix . 'destroy');
+                }
+            } else if (isset($options['except'])) {
+                $except = $options['except'];
+
+                if (!in_array('index', $except)) {
+                    $route->get('/', [$controller, 'index'])->name($prefix . 'index');
+                } else if (!in_array('create', $except)) {
+                    $route->get('/create', [$controller, 'create'])->name($prefix . 'create');
+                } else if (!in_array('store', $except)) {
+                    $route->post('/', [$controller, 'store'])->name($prefix . 'store');
+                } else if (!in_array('show', $except)) {
+                    $route->get('/{id}', [$controller, 'show'])->name($prefix . 'show');
+                } else if (!in_array('edit', $except)) {
+                    $route->get('/{id}/edit', [$controller, 'edit'])->name($prefix . 'edit');
+                } else if (!in_array('update', $except)) {
+                    $route->put('/{id}', [$controller, 'update'])->name($prefix . 'update');
+                } else if (!in_array('destroy', $except)) {
+                    $route->delete('/{id}', [$controller, 'destroy'])->name($prefix . 'destroy');
+                }
+            } else {
+                $route->get('/', [$controller, 'index'])->name($prefix . 'index');
+                $route->get('/create', [$controller, 'create'])->name($prefix . 'create');
+                $route->post('/', [$controller, 'store'])->name($prefix . 'store');
+                $route->get('/{id}', [$controller, 'show'])->name($prefix . 'show');
+                $route->get('/{id}/edit', [$controller, 'edit'])->name($prefix . 'edit');
+                $route->put('/{id}', [$controller, 'update'])->name($prefix . 'update');
+                $route->delete('/{id}', [$controller, 'destroy'])->name($prefix . 'destroy');
+            }
+        });
+    }
+
+    /**
+     * Add a resource stack
+     */
+    public function resources(array $resources)
+    {
+        foreach ($resources as $path => $controller) {
+            $this->resource($path, $controller);
+        }
+    }
+
+    /**
+     * Create a redirect from one URI to another.
+     *
+     * @param  string  $from
+     * @param  string  $to
+     * @param  int  $status
+     * @return Route
+     */
+    public function redirect(string $from, string $to, int $status = 302)
+    {
+        return $this->any($from, function (Response $response) use ($to, $status): ResponseInterface {
+            return $response->redirect($to, $status);
+        });
+    }
+
+    /**
+     * Create a permanent redirect from one URI to another.
+     *
+     * @param  string  $from
+     * @param  string  $to
+     * @return Route
+     */
+    public function redirectPermanently(string $from, string $to)
+    {
+        return $this->redirect($from, $to, 301);
+    }
+
+    /**
      * Add a route that handles multiple HTTP request methods
-     * 
+     *
      * @param string|string[] $httpMethod
      * @param string $path
      * @param callable|\Closure|string|string[] $handler
+     *
+     * @return Route
      */
     public function map($httpMethod, string $path, $handler): RouteInterface
     {
@@ -107,7 +214,7 @@ class RouteCollector implements RouteCollectorInterface
      *
      * @param string $path
      * @param callable|\Closure|string|string[] $handler
-     * 
+     *
      * @return Route
      */
     public function any(string $path, $handler): RouteInterface
