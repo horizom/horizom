@@ -1,7 +1,7 @@
 {
   "name": "horizom/horizom",
   "description": "A light PHP framework",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "license": "MIT",
   "keywords": [
     "horizon",
@@ -10,10 +10,6 @@
     "php"
   ],
   "homepage": "https://horizom.github.io",
-  "support": {
-    "issues": "https://github.com/horizom/horizom/issues",
-    "source": "https://github.com/horizom/horizom"
-  },
   "authors": [
     {
       "name": "Horizom Team",
@@ -22,14 +18,25 @@
     {
       "name": "Codec Solutions",
       "email": "infos@codecci.com"
+    },
+    {
+      "name": "Roland Edi",
+      "email": "lambirou225@gmail.com"
     }
   ],
   "require": {
-    "php": "^7.4 || ^8.0",
+    "php": "^8.0",
+    "ext-bcmath": "*",
+    "ext-iconv": "*",
+    "ext-intl": "*",
+    "ext-json": "*",
     "ext-mbstring": "*",
     "ext-openssl": "*",
+    "delight-im/base64": "^1.0",
+    "delight-im/cookie": "^3.1",
+    "delight-im/db": "^1.3",
     "filp/whoops": "^2.14",
-    "guzzlehttp/psr7": "^2.1",
+    "horizon/core": "^3.0",
     "http-interop/http-factory-guzzle": "^1.0",
     "illuminate/collections": "^8.0",
     "illuminate/contracts": "^8.0",
@@ -52,9 +59,16 @@
   },
   "require-dev": {
     "digitalnature/php-ref": "^1.3",
+    "phpunit/phpunit": "^9.5",
     "symplify/monorepo-builder": "^11.0"
   },
   "replace": {
+    "horizom/auth": "self.version",
+    "horizom/core": "self.version",
+    "horizom/http": "self.version",
+    "horizom/routing": "self.version",
+    "horizom/session": "self.version",
+    "horizom/validation": "self.version",
     "horizon/auth": "self.version",
     "horizon/core": "self.version",
     "horizon/http": "self.version",
@@ -63,12 +77,18 @@
     "horizon/validation": "self.version"
   },
   "autoload": {
-    "psr-4": {
-      "Horizom\\": "src/"
-    },
     "files": [
       "src/helpers.php"
-    ]
+    ],
+    "psr-4": {
+      "Horizom\\": "src/",
+      "Horizom\\Auth\\": "src/Auth/",
+      "Horizom\\Core\\": "src/Core/",
+      "Horizom\\Http\\": "src/Http/",
+      "Horizom\\Routing\\": "src/Routing/",
+      "Horizom\\Session\\": "src/Session/",
+      "Horizom\\Validation\\": "src/Validation/"
+    }
   },
   "autoload-dev": {
     "psr-4": {
@@ -76,6 +96,8 @@
     }
   },
   "suggest": {
+    "ext-curl": "To enable more efficient network calls in Http\\Client.",
+    "ext-openssl": "To use Security::encrypt() or have secure CSRF token generation.",
     "guzzlehttp/guzzle": "Required to use the HTTP Client and the ping methods on schedules (^7.2).",
     "psr/http-message": "Required to allow Storage::put to accept a StreamInterface (^1.0)."
   },
@@ -84,6 +106,11 @@
   },
   "scripts": {
     "start": "php -S localhost:8005 -t tests/public"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "3.0-dev"
+    }
   },
   "minimum-stability": "stable",
   "prefer-stable": true

@@ -3,17 +3,15 @@
 namespace Horizom\Http;
 
 use Horizom\Core\View;
-use GuzzleHttp\Psr7\Response as BaseResponse;
 use Horizom\Http\Exceptions\HttpException;
 use Middlewares\Utils\Factory;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
-use RuntimeException;
 use InvalidArgumentException;
 
-final class Response extends BaseResponse
+final class Response extends \Nyholm\Psr7\Response
 {
     /**
      * @var ResponseFactoryInterface
@@ -170,7 +168,6 @@ final class Response extends BaseResponse
      * @param string|resource|StreamInterface $file
      * @param bool|string $contentType
      *
-     * @throws RuntimeException If the file cannot be opened.
      * @throws InvalidArgumentException If the mode is invalid.
      */
     public function file($file, $contentType = true): ResponseInterface

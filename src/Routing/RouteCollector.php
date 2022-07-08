@@ -165,8 +165,7 @@ class RouteCollector implements RouteCollectorInterface
         $response = (new Psr17Factory())->createResponse();
 
         return $this->any($from, function () use ($to, $status, $response): ResponseInterface {
-            $response->withHeader('Location', $to)->withStatus($status);
-            return $response;
+            return $response->withHeader('Location', $to)->withStatus($status);
         });
     }
 

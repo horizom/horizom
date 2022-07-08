@@ -129,14 +129,4 @@ class View implements FactoryContract
 
         Facade::setFacadeApplication($this->container);
     }
-
-    public static function getViewsPath()
-    {
-        return self::$viewPath;
-    }
-
-    public static function getViewsCachePath()
-    {
-        return self::$viewCachePath;
-    }
 }

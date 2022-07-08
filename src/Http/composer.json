@@ -24,11 +24,11 @@
     }
   ],
   "require": {
-    "php": "^7.4 || ^8.0",
-    "guzzlehttp/psr7": "^2.1",
+    "php": "^8.0",
     "horizom/core": "^3.0",
     "illuminate/support": "^8.0",
     "middlewares/utils": "^3.2",
+    "nyholm/psr7": "^1.5",
     "php-http/message-factory": "^1.0",
     "symfony/http-foundation": "^5.4",
     "symfony/mime": "^5.4"

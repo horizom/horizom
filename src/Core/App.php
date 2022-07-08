@@ -8,8 +8,6 @@ use Horizom\Core\Middlewares\ErrorHandlingMiddleware;
 use Horizom\Http\Request;
 use Horizom\Routing\RouteCollector;
 use Horizom\Routing\RouteCollectorFactory;
-use Middlewares\Utils\Factory;
-use Middlewares\Utils\FactoryDiscovery;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -19,7 +17,7 @@ class App
     /**
      * @const string Horizom Framework Version
      */
-    protected const VERSION = '3.0.0';
+    protected const VERSION = '3.0.1';
 
     /**
      * @var array
@@ -73,18 +71,6 @@ class App
     public $router;
 
     /**
-     * Guzzle factory strategies
-     */
-    private const GUZZLE_FACTORY = [
-        'request' => 'Http\Factory\Guzzle\RequestFactory',
-        'response' => 'Http\Factory\Guzzle\ResponseFactory',
-        'serverRequest' => 'Http\Factory\Guzzle\ServerRequestFactory',
-        'stream' => 'Http\Factory\Guzzle\StreamFactory',
-        'uploadedFile' => 'Http\Factory\Guzzle\UploadedFileFactory',
-        'uri' => 'Http\Factory\Guzzle\UriFactory'
-    ];
-
-    /**
      * @var App
      */
     private static $_instance;
@@ -97,12 +83,11 @@ class App
         define("HORIZOM_VERSION", self::VERSION);
 
         $this->basePath = $basePath;
-        Factory::setFactory(new FactoryDiscovery(self::GUZZLE_FACTORY));
 
         if ($container === null) {
             $container = new Container();
             $container->set("version", $this->version());
-            $container->set(\Horizom\Http\Request::class, Request::create());
+            $container->set(Request::class, Request::create());
         }
 
         $resolver = new MiddlewareResolver($container);

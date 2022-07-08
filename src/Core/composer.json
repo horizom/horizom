@@ -21,11 +21,10 @@
     }
   ],
   "require": {
-    "php": "^7.4 || ^8.0",
+    "php": "^8.0",
     "ext-mbstring": "*",
     "ext-openssl": "*",
     "filp/whoops": "^2.14",
-    "guzzlehttp/psr7": "^2.1",
     "http-interop/http-factory-guzzle": "^1.0",
     "horizom/http": "^3.0",
     "horizom/routing": "^3.0",
