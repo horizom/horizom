@@ -2,16 +2,15 @@
 
 namespace Horizom\Http;
 
-use RuntimeException;
-use GuzzleHttp\Psr7\ServerRequest as BaseRequest;
 use Horizom\Http\Collection\FileCollection;
 use Horizom\Http\Collection\ServerCollection;
+use Horizom\Http\Exceptions\HttpException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
 use Psr\Http\Message\UriInterface;
 
-final class Request extends BaseRequest
+final class Request extends \Nyholm\Psr7\ServerRequest
 {
     /**
      * @var Collection GET (query) parameters
@@ -83,8 +82,8 @@ final class Request extends BaseRequest
      */
     private function initialize($uri)
     {
-        $base_path = config('app.base_path');
-        $path = trim($base_path, '/');
+        $basePath = config('app.base_path');
+        $path = trim($basePath, '/');
         $host = $uri->getHost();
         $port = $uri->getPort();
         $uri_query = $uri->getQuery();
@@ -97,8 +96,8 @@ final class Request extends BaseRequest
         $request_uri = $uri->getPath();
         $queries = $this->parseQuery($uri_query);
 
-        $this->base_path = $base_path;
-        $this->request_path = str_replace($base_path, '', $uri->getPath());
+        $this->base_path = $basePath;
+        $this->request_path = str_replace($basePath, '', $uri->getPath());
         $this->base_url = $uri->getScheme() . '://' . $base_uri;
         $this->full_url = $this->url = $uri->getScheme() . '://' . $host . $request_uri;
 
@@ -119,12 +118,12 @@ final class Request extends BaseRequest
     /**
      * Create new Request
      */
-    public static function create(): self
+    public static function create()
     {
-        $method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
-        $uri = self::getUriFromGlobals();
         $headers = getallheaders();
+        $uri = self::getUriFromGlobals();
         $body = fopen('php://input', 'r') ?: null;
+        $method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
         $protocol = isset($_SERVER['SERVER_PROTOCOL']) ? str_replace('HTTP/', '', $_SERVER['SERVER_PROTOCOL']) : '1.1';
 
         return new Request($method, $uri, $headers, $body, $protocol, $_SERVER);
@@ -315,12 +314,12 @@ final class Request extends BaseRequest
      * Get a unique fingerprint for the request / route / IP address.
      *
      * @return string
-     * @throws \RuntimeException
+     * @throws \HttpException
      */
     public function fingerprint()
     {
         if (!$route = $this->route()) {
-            throw new RuntimeException('Unable to generate fingerprint. Route unavailable.');
+            throw new HttpException('Unable to generate fingerprint. Route unavailable.');
         }
 
         return sha1(implode('|', [
@@ -409,6 +408,67 @@ final class Request extends BaseRequest
     }
 
     /**
+     * Get a Uri populated with values from $_SERVER.
+     */
+    public static function getUriFromGlobals(): UriInterface
+    {
+        $uri = new Uri('');
+
+        $uri = $uri->withScheme(!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http');
+
+        $hasPort = false;
+        if (isset($_SERVER['HTTP_HOST'])) {
+            [$host, $port] = self::extractHostAndPortFromAuthority($_SERVER['HTTP_HOST']);
+            if ($host !== null) {
+                $uri = $uri->withHost($host);
+            }
+
+            if ($port !== null) {
+                $hasPort = true;
+                $uri = $uri->withPort($port);
+            }
+        } elseif (isset($_SERVER['SERVER_NAME'])) {
+            $uri = $uri->withHost($_SERVER['SERVER_NAME']);
+        } elseif (isset($_SERVER['SERVER_ADDR'])) {
+            $uri = $uri->withHost($_SERVER['SERVER_ADDR']);
+        }
+
+        if (!$hasPort && isset($_SERVER['SERVER_PORT'])) {
+            $uri = $uri->withPort($_SERVER['SERVER_PORT']);
+        }
+
+        $hasQuery = false;
+        if (isset($_SERVER['REQUEST_URI'])) {
+            $requestUriParts = explode('?', $_SERVER['REQUEST_URI'], 2);
+            $uri = $uri->withPath($requestUriParts[0]);
+            if (isset($requestUriParts[1])) {
+                $hasQuery = true;
+                $uri = $uri->withQuery($requestUriParts[1]);
+            }
+        }
+
+        if (!$hasQuery && isset($_SERVER['QUERY_STRING'])) {
+            $uri = $uri->withQuery($_SERVER['QUERY_STRING']);
+        }
+
+        return $uri;
+    }
+
+    private static function extractHostAndPortFromAuthority(string $authority): array
+    {
+        $uri = 'http://' . $authority;
+        $parts = parse_url($uri);
+        if (false === $parts) {
+            return [null, null];
+        }
+
+        $host = $parts['host'] ?? null;
+        $port = $parts['port'] ?? null;
+
+        return [$host, $port];
+    }
+
+    /**
      * @param string $query
      * @return array
      */
@@ -417,7 +477,7 @@ final class Request extends BaseRequest
         $params = [];
 
         if ($query) {
-            foreach (explode('&', $query) as $k => $v) {
+            foreach (explode('&', $query) as $v) {
                 $param = explode('=', $v);
                 $params[$param[0]] = $param[1];
             }

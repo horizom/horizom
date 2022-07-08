@@ -1,6 +1,6 @@
 <?php
 
-use Horizom\App;
+use Horizom\Core\App;
 use Horizom\Http\Response;
 use Illuminate\Support\Facades\Hash;
 

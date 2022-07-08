@@ -2,17 +2,16 @@
 
 namespace Horizom\Http;
 
-use Horizom\View;
-use GuzzleHttp\Psr7\Response as BaseResponse;
+use Horizom\Core\View;
+use Horizom\Http\Exceptions\HttpException;
 use Middlewares\Utils\Factory;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
-use RuntimeException;
 use InvalidArgumentException;
 
-final class Response extends BaseResponse
+final class Response extends \Nyholm\Psr7\Response
 {
     /**
      * @var ResponseFactoryInterface
@@ -31,8 +30,12 @@ final class Response extends BaseResponse
     {
         parent::__construct($status, $headers, $body, $version, $reason);
 
-        $this->responseFactory = Factory::getResponseFactory();
         $this->streamFactory = Factory::getStreamFactory();
+    }
+
+    public static function create()
+    {
+        return Factory::getResponseFactory()->createResponse();
     }
 
     /**
@@ -60,15 +63,8 @@ final class Response extends BaseResponse
      */
     public function redirect(string $url, ?int $status = null): ResponseInterface
     {
-        if ($status === null) {
-            $status = 302;
-        }
-
-        $response = $this->responseFactory->createResponse()
-            ->withHeader('Location', $url)
-            ->withStatus($status);
-
-        return $response;
+        $status = ($status === null) ? 302 : $status;
+        return self::create()->withHeader('Location', $url)->withStatus($status);
     }
 
     /**
@@ -82,16 +78,8 @@ final class Response extends BaseResponse
      */
     public function redirectWithBaseUrl($url = null, int $status = null): ResponseInterface
     {
-        if ($status === null) {
-            $status = 302;
-        }
-
         $url = (is_null($url)) ? HORIZOM_BASE_URL : HORIZOM_BASE_URL . '/' . trim($url, '/');
-        $response = $this->responseFactory->createResponse()
-            ->withHeader('Location', $url)
-            ->withStatus($status);
-
-        return $response;
+        return $this->redirect($url, $status);
     }
 
     /**
@@ -99,20 +87,10 @@ final class Response extends BaseResponse
      */
     public function view(string $name, array $data = [], $contentType = 'text/html'): ResponseInterface
     {
-        $viewPath = HORIZOM_ROOT . '/resources/views';
-        $viewCachePath = HORIZOM_ROOT . '/resources/cache/views';
+        $output = (string) (new View())->make($name, $data)->render();
+        $body = $this->streamFactory->createStream($output);
 
-        if (!is_dir($viewCachePath)) {
-            mkdir($viewCachePath, 0755, true);
-        }
-
-        $blade = new View($viewPath, $viewCachePath);
-        $output = (string) $blade->make($name, $data)->render();
-        $response = $this->responseFactory->createResponse()
-            ->withHeader('Content-type', $contentType)
-            ->withBody($this->streamFactory->createStream($output));
-
-        return $response;
+        return self::create()->withHeader('Content-type', $contentType)->withBody($body);
     }
 
     /**
@@ -126,12 +104,11 @@ final class Response extends BaseResponse
         $json = (string) json_encode($data, $options, $depth);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new RuntimeException(json_last_error_msg(), json_last_error());
+            throw new HttpException(json_last_error_msg(), json_last_error());
         }
 
-        $response = $this->responseFactory->createResponse()
-            ->withHeader('Content-Type', 'application/json')
-            ->withBody($this->streamFactory->createStream($json));
+        $body = $this->streamFactory->createStream($json);
+        $response = self::create()->withHeader('Content-Type', 'application/json')->withBody($body);
 
         if ($status !== null) {
             $response = $response->withStatus($status);
@@ -191,12 +168,11 @@ final class Response extends BaseResponse
      * @param string|resource|StreamInterface $file
      * @param bool|string $contentType
      *
-     * @throws RuntimeException If the file cannot be opened.
      * @throws InvalidArgumentException If the mode is invalid.
      */
     public function file($file, $contentType = true): ResponseInterface
     {
-        $response = $this->responseFactory->createResponse();
+        $response = self::create();
 
         if (is_resource($file)) {
             $response = $response->withBody($this->streamFactory->createStreamFromResource($file));

@@ -2,10 +2,9 @@
 
 namespace Horizom\Http;
 
-use Horizom\Exception\FileNotFoundException;
-use Symfony\Component\HttpFoundation\File\UploadedFile as SymfonyUploadedFile;
+use Horizom\Http\Exceptions\FileNotFoundException;
 
-class UploadedFile extends SymfonyUploadedFile
+class UploadedFile extends \Symfony\Component\HttpFoundation\File\UploadedFile
 {
     use FileHelpers;
 
@@ -38,11 +37,11 @@ class UploadedFile extends SymfonyUploadedFile
     /**
      * Create a new file instance from a base instance.
      *
-     * @param  SymfonyUploadedFile  $file
+     * @param  UploadedFile  $file
      * @param  bool  $test
      * @return static
      */
-    public static function createFromBase(SymfonyUploadedFile $file, $test = false)
+    public static function createFromBase(UploadedFile $file, $test = false)
     {
         return $file instanceof static ? $file : new static(
             $file->getPathname(),

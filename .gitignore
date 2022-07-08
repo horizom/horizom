@@ -1,9 +1,9 @@
 .DS_Store
 
 /.vscode/*
-/vendor/*
-/tests/*
-/.htaccess
+/vendor
+/tests
+/monorepo-builder.php
 
 .env
 .env.backup

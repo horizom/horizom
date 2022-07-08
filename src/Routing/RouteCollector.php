@@ -13,8 +13,7 @@ namespace Horizom\Routing;
 
 use FastRoute\DataGenerator;
 use FastRoute\RouteParser;
-use Horizom\Http\Request;
-use Horizom\Http\Response;
+use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\ResponseInterface;
 
 use function class_exists;
@@ -163,8 +162,10 @@ class RouteCollector implements RouteCollectorInterface
      */
     public function redirect(string $from, string $to, int $status = 302)
     {
-        return $this->any($from, function (Response $response) use ($to, $status): ResponseInterface {
-            return $response->redirect($to, $status);
+        $response = (new Psr17Factory())->createResponse();
+
+        return $this->any($from, function () use ($to, $status, $response): ResponseInterface {
+            return $response->withHeader('Location', $to)->withStatus($status);
         });
     }
 
