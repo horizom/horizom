@@ -1,6 +1,6 @@
 <?php
 
-namespace Horizom;
+namespace Horizom\Core;
 
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Container\Container as ContainerInterface;

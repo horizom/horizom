@@ -1,6 +1,6 @@
 <?php
 
-namespace Horizom;
+namespace Horizom\Core;
 
 use DI\Container as DIContainer;
 use Psr\Container\ContainerInterface;
@@ -21,4 +21,5 @@ use Psr\Container\ContainerInterface;
  *  `notAllowedHandler` a callable with the signature: function($request, $response, $allowedHttpMethods)
  */
 class Container extends DIContainer implements ContainerInterface
-{}
+{
+}

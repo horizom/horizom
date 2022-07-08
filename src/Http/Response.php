@@ -2,7 +2,7 @@
 
 namespace Horizom\Http;
 
-use Horizom\View;
+use Horizom\Core\View;
 use GuzzleHttp\Psr7\Response as BaseResponse;
 use Middlewares\Utils\Factory;
 use Psr\Http\Message\StreamInterface;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Horizom;
+namespace Horizom\Core;
 
 use Horizom\Dispatcher\Dispatcher;
 use Horizom\Dispatcher\MiddlewareResolver;

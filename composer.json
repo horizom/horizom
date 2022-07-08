@@ -1,7 +1,7 @@
 {
   "name": "horizom/core",
   "description": "A light PHP framework",
-  "version": "2.5.2",
+  "version": "3.0.0",
   "keywords": [
     "horizon",
     "horizom",
@@ -54,7 +54,7 @@
       "Horizom\\": "src/"
     },
     "files": [
-      "src/helpers.php"
+      "src/Core/helpers.php"
     ]
   },
   "autoload-dev": {
