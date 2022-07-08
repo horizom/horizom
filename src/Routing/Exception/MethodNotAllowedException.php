@@ -1,12 +1,8 @@
 <?php
 
-declare(strict_types=1);
+namespace Horizom\Routing\Exception;
 
-namespace Horizom\Exception;
-
-use RuntimeException;
-
-class MethodNotAllowedException extends RuntimeException
+class MethodNotAllowedException extends RoutingException
 {
     /**
      * @var string[]

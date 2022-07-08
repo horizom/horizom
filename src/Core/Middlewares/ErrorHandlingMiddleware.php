@@ -1,9 +1,9 @@
 <?php
 
-namespace Horizom\Middleware;
+namespace Horizom\Core\Middlewares;
 
 use Throwable;
-use Horizom\Interfaces\ErrorHandlerInterface;
+use Horizom\Core\ErrorHandlerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;

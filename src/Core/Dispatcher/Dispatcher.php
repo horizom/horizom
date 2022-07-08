@@ -1,10 +1,8 @@
 <?php
 
-declare(strict_types=1);
+namespace Horizom\Core\Dispatcher;
 
-namespace Horizom\Dispatcher;
-
-use RuntimeException;
+use Horizom\Core\Exceptions\RequestHandlerException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -61,7 +59,7 @@ class Dispatcher implements RequestHandlerInterface
         $step = $this->middlewares[$this->currentStep] ?? null;
 
         if ($step === null) {
-            throw new RuntimeException("Step {$this->currentStep} not found");
+            throw new RequestHandlerException("Step {$this->currentStep} not found");
         }
 
         $this->currentStep++;

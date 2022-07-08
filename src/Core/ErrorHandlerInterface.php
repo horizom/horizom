@@ -1,6 +1,6 @@
 <?php
 
-namespace Horizom\Interfaces;
+namespace Horizom\Core;
 
 use Throwable;
 use Psr\Http\Message\ResponseInterface;

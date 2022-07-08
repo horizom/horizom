@@ -12,7 +12,8 @@ declare(strict_types=1);
 namespace Horizom\Routing;
 
 use Closure;
-use Horizom\Dispatcher\MiddlewarePipe;
+use Horizom\Core\Dispatcher\MiddlewarePipe;
+use Horizom\Routing\Exception\RoutingException;
 use Psr\Http\Server\MiddlewareInterface;
 
 class Route implements RouteInterface
@@ -140,7 +141,7 @@ class Route implements RouteInterface
     public function getPipe(): MiddlewarePipe
     {
         if ($this->pipe === null) {
-            throw new \RuntimeException('Route doesn\'t have pipe');
+            throw new RoutingException('Route doesn\'t have pipe');
         }
 
         return $this->pipe;

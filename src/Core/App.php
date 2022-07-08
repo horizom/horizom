@@ -2,11 +2,10 @@
 
 namespace Horizom\Core;
 
-use Horizom\Dispatcher\Dispatcher;
-use Horizom\Dispatcher\MiddlewareResolver;
+use Horizom\Core\Dispatcher\Dispatcher;
+use Horizom\Core\Dispatcher\MiddlewareResolver;
+use Horizom\Core\Middlewares\ErrorHandlingMiddleware;
 use Horizom\Http\Request;
-use Horizom\Interfaces\ErrorHandlerInterface;
-use Horizom\Middleware\ErrorHandlingMiddleware;
 use Horizom\Routing\RouteCollector;
 use Horizom\Routing\RouteCollectorFactory;
 use Middlewares\Utils\Factory;
@@ -20,7 +19,7 @@ class App
     /**
      * @const string Horizom Framework Version
      */
-    protected const VERSION = '2.5.1';
+    protected const VERSION = '3.0.0';
 
     /**
      * @var array

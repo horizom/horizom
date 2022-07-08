@@ -1,20 +1,12 @@
 <?php
-/**
- * This file is part of the Makise-Co Framework
- *
- * World line: 0.571024a
- * (c) Dmitry K. <coder1994@gmail.com>
- */
-
-declare(strict_types=1);
 
 namespace Horizom\Routing;
 
 use Invoker\CallableResolver;
 use Invoker\Invoker;
 use Invoker\ParameterResolver;
-use Horizom\Dispatcher\MiddlewarePipeFactory;
-use Horizom\Dispatcher\MiddlewareResolver;
+use Horizom\Core\Dispatcher\MiddlewarePipeFactory;
+use Horizom\Core\Dispatcher\MiddlewareResolver;
 use Horizom\Routing\HandlerResolver\PhpDiRouteHandlerResolver;
 use Horizom\Routing\Invoker\PhpDiRouteInvoker;
 use Psr\Container\ContainerInterface;

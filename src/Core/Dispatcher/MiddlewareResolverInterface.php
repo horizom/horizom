@@ -1,8 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Horizom\Dispatcher;
+namespace Horizom\Core\Dispatcher;
 
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;

@@ -1,9 +1,8 @@
 .DS_Store
 
 /.vscode/*
-/vendor/*
-/tests/*
-/.htaccess
+/vendor
+/tests
 
 .env
 .env.backup

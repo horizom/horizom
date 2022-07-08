@@ -31,11 +31,18 @@ class View implements FactoryContract
      */
     private $compiler;
 
-    public function __construct($viewPaths, string $cachePath, ContainerInterface $container = null)
+    public function __construct(ContainerInterface $container = null)
     {
         $this->container = $container ?: new Container;
 
-        $this->setupContainer((array) $viewPaths, $cachePath);
+        $viewPaths = [HORIZOM_ROOT . '/resources/views'];
+        $cachePath = HORIZOM_ROOT . '/resources/cache/views';
+
+        if (!is_dir($cachePath)) {
+            mkdir($cachePath, 0755, true);
+        }
+
+        $this->setupContainer($viewPaths, $cachePath);
         (new ViewServiceProvider($this->container))->register();
 
         $this->factory = $this->container->get('view');
@@ -113,21 +120,23 @@ class View implements FactoryContract
 
     protected function setupContainer(array $viewPaths, string $cachePath)
     {
-        $this->container->bindIf('files', function () {
-            return new Filesystem;
-        }, true);
-
-        $this->container->bindIf('events', function () {
-            return new Dispatcher;
-        }, true);
+        $this->container->bindIf('files', fn () => new Filesystem(), true);
+        $this->container->bindIf('events', fn () => new Dispatcher(), true);
 
         $this->container->bindIf('config', function () use ($viewPaths, $cachePath) {
-            return [
-                'view.paths' => $viewPaths,
-                'view.compiled' => $cachePath,
-            ];
+            return ['view.paths' => $viewPaths, 'view.compiled' => $cachePath];
         }, true);
 
         Facade::setFacadeApplication($this->container);
+    }
+
+    public static function getViewsPath()
+    {
+        return self::$viewPath;
+    }
+
+    public static function getViewsCachePath()
+    {
+        return self::$viewCachePath;
     }
 }

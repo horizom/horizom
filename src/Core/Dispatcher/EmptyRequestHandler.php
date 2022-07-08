@@ -1,9 +1,8 @@
 <?php
 
-declare(strict_types=1);
+namespace Horizom\Core\Dispatcher;
 
-namespace Horizom\Dispatcher;
-
+use Horizom\Core\Exceptions\RequestHandlerException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -12,6 +11,6 @@ final class EmptyRequestHandler implements RequestHandlerInterface
 {
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        throw new \RuntimeException('Empty handler');
+        throw new RequestHandlerException('Empty handler');
     }
 }

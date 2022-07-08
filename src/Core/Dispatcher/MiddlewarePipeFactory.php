@@ -1,11 +1,8 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Horizom\Dispatcher;
+namespace Horizom\Core\Dispatcher;
 
 use InvalidArgumentException;
-use Horizom\Dispatcher\MiddlewarePipe;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
@@ -71,7 +68,7 @@ class MiddlewarePipeFactory implements MiddlewarePipeFactoryInterface
 
         while (($nextPipe = $endOfPipe->getNext()) instanceof MiddlewarePipe) {
             $handler = $nextPipe->getHandler();
-            
+
             if (!$handler instanceof EmptyRequestHandler && $handler instanceof RequestHandlerInterface) {
                 throw new InvalidArgumentException('You can\'t merge pipeline with request handler');
             }

@@ -1,8 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Horizom\Dispatcher;
+namespace Horizom\Core\Dispatcher;
 
 use TypeError;
 use Psr\Container\ContainerInterface;
@@ -43,7 +41,7 @@ class MiddlewareResolver implements MiddlewareResolverInterface
 
             throw new TypeError(
                 "Middleware must implement MiddlewareInterface or RequestHandlerInterface " .
-                "instance of {$type} got"
+                    "instance of {$type} got"
             );
         }
 

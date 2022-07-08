@@ -1,17 +1,18 @@
 {
-  "name": "horizom/core",
+  "name": "horizom/horizom",
   "description": "A light PHP framework",
   "version": "3.0.0",
+  "license": "MIT",
   "keywords": [
     "horizon",
     "horizom",
     "framework",
     "php"
   ],
-  "license": "MIT",
   "homepage": "https://horizom.github.io",
   "support": {
-    "issues": "https://github.com/horizom/core/issues"
+    "issues": "https://github.com/horizom/horizom/issues",
+    "source": "https://github.com/horizom/horizom"
   },
   "authors": [
     {
@@ -25,6 +26,8 @@
   ],
   "require": {
     "php": "^7.4 || ^8.0",
+    "ext-mbstring": "*",
+    "ext-openssl": "*",
     "filp/whoops": "^2.14",
     "guzzlehttp/psr7": "^2.1",
     "http-interop/http-factory-guzzle": "^1.0",
@@ -36,6 +39,7 @@
     "middlewares/utils": "^3.2",
     "middlewares/whoops": "^2.0",
     "nikic/fast-route": "^1.3",
+    "nyholm/psr7": "^1.5",
     "php-di/invoker": "^2.1",
     "php-di/php-di": "^6.0",
     "php-http/message-factory": "^1.0",
@@ -47,20 +51,33 @@
     "symfony/mime": "^5.4"
   },
   "require-dev": {
-    "digitalnature/php-ref": "^1.3"
+    "digitalnature/php-ref": "^1.3",
+    "symplify/monorepo-builder": "^11.0"
+  },
+  "replace": {
+    "horizon/auth": "self.version",
+    "horizon/core": "self.version",
+    "horizon/http": "self.version",
+    "horizon/routing": "self.version",
+    "horizon/session": "self.version",
+    "horizon/validation": "self.version"
   },
   "autoload": {
     "psr-4": {
       "Horizom\\": "src/"
     },
     "files": [
-      "src/Core/helpers.php"
+      "src/helpers.php"
     ]
   },
   "autoload-dev": {
     "psr-4": {
       "App\\": "tests/app/"
     }
+  },
+  "suggest": {
+    "guzzlehttp/guzzle": "Required to use the HTTP Client and the ping methods on schedules (^7.2).",
+    "psr/http-message": "Required to allow Storage::put to accept a StreamInterface (^1.0)."
   },
   "config": {
     "sort-packages": true

@@ -2,7 +2,7 @@
 
 namespace Horizom\Http\Collection;
 
-use Horizom\Exception\BadRequestException;
+use Horizom\Http\Exceptions\BadRequestException;
 
 /**
  * ParameterBag is a container for key/value pairs.
@@ -186,7 +186,7 @@ class Collection implements \IteratorAggregate, \Countable
         }
 
         if ((\FILTER_CALLBACK & $filter) && !(($options['options'] ?? null) instanceof \Closure)) {
-            trigger_deprecation('symfony/http-foundation', '5.2', 'Not passing a Closure together with FILTER_CALLBACK to "%s()" is deprecated. Wrap your filter in a closure instead.', __METHOD__);
+            \trigger_deprecation('symfony/http-foundation', '5.2', 'Not passing a Closure together with FILTER_CALLBACK to "%s()" is deprecated. Wrap your filter in a closure instead.', __METHOD__);
             // throw new \InvalidArgumentException(sprintf('A Closure must be passed to "%s()" when FILTER_CALLBACK is used, "%s" given.', __METHOD__, get_debug_type($options['options'] ?? null)));
         }
 

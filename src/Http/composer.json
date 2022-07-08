@@ -1,0 +1,46 @@
+{
+  "name": "horizom/http",
+  "description": "The Horizom Http package.",
+  "type": "library",
+  "license": "MIT",
+  "homepage": "https://horizom.github.io",
+  "keywords": [
+    "horizon",
+    "horizom",
+    "http",
+    "response",
+    "request",
+    "file",
+    "php"
+  ],
+  "support": {
+    "issues": "https://github.com/horizom/horizom/issues",
+    "source": "https://github.com/horizom/horizom"
+  },
+  "authors": [
+    {
+      "name": "Roland Edi",
+      "email": "lambirou225@gmail.com"
+    }
+  ],
+  "require": {
+    "php": "^7.4 || ^8.0",
+    "guzzlehttp/psr7": "^2.1",
+    "horizom/core": "^3.0",
+    "illuminate/support": "^8.0",
+    "middlewares/utils": "^3.2",
+    "php-http/message-factory": "^1.0",
+    "symfony/http-foundation": "^5.4",
+    "symfony/mime": "^5.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "Horizom\\Http\\": ""
+    }
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}

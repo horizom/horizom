@@ -1,8 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Horizom\Middleware;
+namespace Horizom\Core\Middlewares;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;

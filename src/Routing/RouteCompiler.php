@@ -1,17 +1,9 @@
 <?php
-/**
- * This file is part of the Makise-Co Framework
- *
- * World line: 0.571024a
- * (c) Dmitry K. <coder1994@gmail.com>
- */
-
-declare(strict_types=1);
 
 namespace Horizom\Routing;
 
 use Horizom\Routing\Invoker\RouteInvokerInterface;
-use Horizom\Dispatcher\MiddlewarePipeFactoryInterface;
+use Horizom\Core\Dispatcher\MiddlewarePipeFactoryInterface;
 
 class RouteCompiler implements RouteCompilerInterface
 {
