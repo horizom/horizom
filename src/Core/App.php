@@ -2,9 +2,9 @@
 
 namespace Horizom\Core;
 
-use Horizom\Core\Dispatcher\Dispatcher;
-use Horizom\Core\Dispatcher\MiddlewareResolver;
 use Horizom\Core\Middlewares\ErrorHandlingMiddleware;
+use Horizom\Dispatcher\Dispatcher;
+use Horizom\Dispatcher\MiddlewareResolver;
 use Horizom\Http\Request;
 use Horizom\Routing\RouteCollector;
 use Horizom\Routing\RouteCollectorFactory;

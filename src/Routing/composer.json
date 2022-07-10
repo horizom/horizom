@@ -24,7 +24,7 @@
   ],
   "require": {
     "php": "^8.0",
-    "horizon/core": "^3.0",
+    "horizon/dispatcher": "^3.0",
     "nikic/fast-route": "^1.3",
     "nyholm/psr7": "^1.5",
     "psr/container": "^1.0",

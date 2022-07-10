@@ -1,15 +1,19 @@
 {
   "name": "horizom/horizom",
   "description": "A light PHP framework",
-  "version": "3.0.1",
+  "version": "3.0.0",
   "license": "MIT",
+  "homepage": "https://horizom.github.io",
   "keywords": [
     "horizon",
     "horizom",
     "framework",
     "php"
   ],
-  "homepage": "https://horizom.github.io",
+  "support": {
+    "issues": "https://github.com/horizom/horizom/issues",
+    "source": "https://github.com/horizom/horizom"
+  },
   "authors": [
     {
       "name": "Horizom Team",
@@ -36,15 +40,12 @@
     "delight-im/cookie": "^3.1",
     "delight-im/db": "^1.3",
     "filp/whoops": "^2.14",
-    "horizon/core": "^3.0",
     "http-interop/http-factory-guzzle": "^1.0",
     "illuminate/collections": "^8.0",
     "illuminate/contracts": "^8.0",
     "illuminate/support": "^8.0",
     "illuminate/view": "^8.0",
-    "middlewares/request-handler": "^2.0",
     "middlewares/utils": "^3.2",
-    "middlewares/whoops": "^2.0",
     "nikic/fast-route": "^1.3",
     "nyholm/psr7": "^1.5",
     "php-di/invoker": "^2.1",
@@ -65,25 +66,22 @@
   "replace": {
     "horizom/auth": "self.version",
     "horizom/core": "self.version",
+    "horizom/dispatcher": "self.version",
     "horizom/http": "self.version",
     "horizom/routing": "self.version",
     "horizom/session": "self.version",
-    "horizom/validation": "self.version",
-    "horizon/auth": "self.version",
-    "horizon/core": "self.version",
-    "horizon/http": "self.version",
-    "horizon/routing": "self.version",
-    "horizon/session": "self.version",
-    "horizon/validation": "self.version"
+    "horizom/validation": "self.version"
   },
   "autoload": {
     "files": [
-      "src/helpers.php"
+      "src/Core/helpers.php",
+      "src/Http/helpers.php"
     ],
     "psr-4": {
       "Horizom\\": "src/",
       "Horizom\\Auth\\": "src/Auth/",
       "Horizom\\Core\\": "src/Core/",
+      "Horizom\\Dispatcher\\": "src/Dispatcher/",
       "Horizom\\Http\\": "src/Http/",
       "Horizom\\Routing\\": "src/Routing/",
       "Horizom\\Session\\": "src/Session/",

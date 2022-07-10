@@ -1,6 +1,6 @@
 <?php
 
-namespace Horizom\Core\Exceptions;
+namespace Horizom\Dispatcher\Exceptions;
 
 class RequestHandlerException extends \RuntimeException
 {

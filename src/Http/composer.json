@@ -25,7 +25,7 @@
   ],
   "require": {
     "php": "^8.0",
-    "horizom/core": "^3.0",
+    "horizom/dispatcher": "^3.0",
     "illuminate/support": "^8.0",
     "middlewares/utils": "^3.2",
     "nyholm/psr7": "^1.5",
@@ -34,9 +34,15 @@
     "symfony/mime": "^5.4"
   },
   "autoload": {
+    "files": [
+      "helpers.php"
+    ],
     "psr-4": {
       "Horizom\\Http\\": ""
     }
+  },
+  "suggest": {
+    "horizom/core": "Required to use the Response view method."
   },
   "config": {
     "sort-packages": true

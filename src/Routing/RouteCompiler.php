@@ -3,7 +3,7 @@
 namespace Horizom\Routing;
 
 use Horizom\Routing\Invoker\RouteInvokerInterface;
-use Horizom\Core\Dispatcher\MiddlewarePipeFactoryInterface;
+use Horizom\Dispatcher\MiddlewarePipeFactoryInterface;
 
 class RouteCompiler implements RouteCompilerInterface
 {
