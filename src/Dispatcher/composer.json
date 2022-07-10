@@ -1,0 +1,36 @@
+{
+    "name": "horizom/dispatcher",
+    "description": "The Horizom Dispatcher package.",
+    "type": "library",
+    "license": "MIT",
+    "homepage": "https://horizom.github.io",
+    "keywords": [
+        "horizon",
+        "horizom",
+        "dispatcher",
+        "php"
+    ],
+    "support": {
+        "issues": "https://github.com/horizom/horizom/issues",
+        "source": "https://github.com/horizom/horizom"
+    },
+    "authors": [
+        {
+            "name": "Roland Edi",
+            "email": "lambirou225@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Horizom\\Dispatcher\\": ""
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

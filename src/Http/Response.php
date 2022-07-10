@@ -2,16 +2,16 @@
 
 namespace Horizom\Http;
 
-use Horizom\Core\View;
 use Horizom\Http\Exceptions\HttpException;
-use Middlewares\Utils\Factory;
+use Nyholm\Psr7\Factory\Psr17Factory;
+use Nyholm\Psr7\Response as BaseResponse;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamFactoryInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use InvalidArgumentException;
 
-final class Response extends \Nyholm\Psr7\Response
+final class Response extends BaseResponse
 {
     /**
      * @var ResponseFactoryInterface
@@ -24,18 +24,23 @@ final class Response extends \Nyholm\Psr7\Response
     protected $streamFactory;
 
     /**
+     * @var Psr17Factory
+     */
+    protected static $factory;
+
+    /**
      * @inherit
      */
     public function __construct($status = 200, array $headers = [], $body = null, $version = '1.1', $reason = null)
     {
         parent::__construct($status, $headers, $body, $version, $reason);
 
-        $this->streamFactory = Factory::getStreamFactory();
+        self::$factory = new Psr17Factory();
     }
 
     public static function create()
     {
-        return Factory::getResponseFactory()->createResponse();
+        return self::$factory->createResponse();
     }
 
     /**
@@ -87,8 +92,13 @@ final class Response extends \Nyholm\Psr7\Response
      */
     public function view(string $name, array $data = [], $contentType = 'text/html'): ResponseInterface
     {
-        $output = (string) (new View())->make($name, $data)->render();
-        $body = $this->streamFactory->createStream($output);
+        if (class_exists('\Horizom\Core\View')) {
+            $content = (string) (new \Horizom\Core\View())->make($name, $data)->render();
+        } else {
+            throw new \RuntimeException("View library not found.", 1);
+        }
+
+        $body = self::$factory->createStream($content);
 
         return self::create()->withHeader('Content-type', $contentType)->withBody($body);
     }
@@ -107,7 +117,7 @@ final class Response extends \Nyholm\Psr7\Response
             throw new HttpException(json_last_error_msg(), json_last_error());
         }
 
-        $body = $this->streamFactory->createStream($json);
+        $body = self::$factory->createStream($json);
         $response = self::create()->withHeader('Content-Type', 'application/json')->withBody($body);
 
         if ($status !== null) {
@@ -175,9 +185,9 @@ final class Response extends \Nyholm\Psr7\Response
         $response = self::create();
 
         if (is_resource($file)) {
-            $response = $response->withBody($this->streamFactory->createStreamFromResource($file));
+            $response = $response->withBody(self::$factory->createStreamFromResource($file));
         } elseif (is_string($file)) {
-            $response = $response->withBody($this->streamFactory->createStreamFromFile($file));
+            $response = $response->withBody(self::$factory->createStreamFromFile($file));
         } elseif ($file instanceof StreamInterface) {
             $response = $response->withBody($file);
         } else {

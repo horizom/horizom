@@ -1,8 +1,8 @@
 <?php
 
-namespace Horizom\Core\Dispatcher;
+namespace Horizom\Dispatcher;
 
-use Horizom\Core\Exceptions\RequestHandlerException;
+use Horizom\Dispatcher\Exceptions\RequestHandlerException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;

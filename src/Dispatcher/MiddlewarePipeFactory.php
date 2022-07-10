@@ -1,6 +1,6 @@
 <?php
 
-namespace Horizom\Core\Dispatcher;
+namespace Horizom\Dispatcher;
 
 use InvalidArgumentException;
 use Psr\Http\Server\MiddlewareInterface;

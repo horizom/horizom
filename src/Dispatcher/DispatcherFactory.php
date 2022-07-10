@@ -1,6 +1,6 @@
 <?php
 
-namespace Horizom\Core\Dispatcher;
+namespace Horizom\Dispatcher;
 
 class DispatcherFactory implements DispatcherFactoryInterface
 {

@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace Horizom\Routing;
 
 use Closure;
-use Horizom\Core\Dispatcher\MiddlewarePipe;
+use Horizom\Dispatcher\MiddlewarePipe;
 use Horizom\Routing\Exception\RoutingException;
 use Psr\Http\Server\MiddlewareInterface;
 

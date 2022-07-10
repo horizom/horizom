@@ -26,6 +26,7 @@
     "ext-openssl": "*",
     "filp/whoops": "^2.14",
     "http-interop/http-factory-guzzle": "^1.0",
+    "horizom/dispatcher": "^3.0",
     "horizom/http": "^3.0",
     "horizom/routing": "^3.0",
     "illuminate/collections": "^8.0",
@@ -43,6 +44,9 @@
     "psr/http-server-handler": "^1.0"
   },
   "autoload": {
+    "files": [
+      "helpers.php"
+    ],
     "psr-4": {
       "Horizom\\Core\\": ""
     }

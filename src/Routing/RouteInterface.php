@@ -3,7 +3,7 @@
 namespace Horizom\Routing;
 
 use Closure;
-use Horizom\Core\Dispatcher\MiddlewarePipe;
+use Horizom\Dispatcher\MiddlewarePipe;
 use Psr\Http\Server\MiddlewareInterface;
 
 interface RouteInterface
