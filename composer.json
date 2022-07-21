@@ -1,7 +1,7 @@
 {
   "name": "horizom/horizom",
   "description": "A light PHP framework",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "license": "MIT",
   "homepage": "https://horizom.github.io",
   "keywords": [

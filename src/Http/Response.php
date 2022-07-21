@@ -99,8 +99,9 @@ final class Response extends BaseResponse
         }
 
         $body = self::$factory->createStream($content);
+        $response = clone $this;
 
-        return self::create()->withHeader('Content-type', $contentType)->withBody($body);
+        return $response->withHeader('Content-type', $contentType)->withBody($body);
     }
 
     /**
@@ -117,8 +118,9 @@ final class Response extends BaseResponse
             throw new HttpException(json_last_error_msg(), json_last_error());
         }
 
+        $new = clone $this;
         $body = self::$factory->createStream($json);
-        $response = self::create()->withHeader('Content-Type', 'application/json')->withBody($body);
+        $response = $new->withHeader('Content-Type', 'application/json')->withBody($body);
 
         if ($status !== null) {
             $response = $response->withStatus($status);
