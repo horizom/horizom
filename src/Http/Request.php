@@ -2,40 +2,14 @@
 
 namespace Horizom\Http;
 
-use Horizom\Http\Collection\FileCollection;
-use Horizom\Http\Collection\ServerCollection;
 use Horizom\Http\Exceptions\HttpException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
-use Illuminate\Support\Collection;
 use Psr\Http\Message\UriInterface;
 
 final class Request extends \Nyholm\Psr7\ServerRequest
 {
-    /**
-     * @var Collection GET (query) parameters
-     */
-    private $query;
-
-    /**
-     * @var Collection POST parameters
-     */
-    private $post;
-
-    /**
-     * @var Collection Client cookie data
-     */
-    private $cookie;
-
-    /**
-     * @var ServerDataCollection Server created attributes
-     */
-    private $server;
-
-    /**
-     * @var FilesDataCollection Uploaded temporary files
-     */
-    private $files;
+    use RequestInputTrait;
 
     /**
      * @var string
@@ -86,7 +60,7 @@ final class Request extends \Nyholm\Psr7\ServerRequest
         $path = trim($basePath, '/');
         $host = $uri->getHost();
         $port = $uri->getPort();
-        $uri_query = $uri->getQuery();
+        $query = $uri->getQuery();
 
         if ($port && !in_array($port, [80, 443])) {
             $host = $host . ':' . $port;
@@ -94,22 +68,15 @@ final class Request extends \Nyholm\Psr7\ServerRequest
 
         $base_uri = ($path) ? $host . '/' . $path : $host;
         $request_uri = $uri->getPath();
-        $queries = $this->parseQuery($uri_query);
 
         $this->base_path = $basePath;
         $this->request_path = str_replace($basePath, '', $uri->getPath());
         $this->base_url = $uri->getScheme() . '://' . $base_uri;
         $this->full_url = $this->url = $uri->getScheme() . '://' . $host . $request_uri;
 
-        if ($uri_query) {
-            $this->full_url = $this->full_url . '?' . $uri_query;
+        if ($query) {
+            $this->full_url = $this->full_url . '?' . $query;
         }
-
-        $this->query = new Collection($queries);
-        $this->post = new Collection($_POST);
-        $this->cookie = new Collection($_COOKIE);
-        $this->files = new FileCollection($_FILES);
-        $this->server = new ServerCollection($_SERVER);
 
         define("HORIZOM_BASE_PATH", $this->base_path);
         define("HORIZOM_BASE_URL", $this->base_url);
@@ -148,6 +115,45 @@ final class Request extends \Nyholm\Psr7\ServerRequest
     }
 
     /**
+     * Verify that the HTTP verb matches a given string
+     */
+    public function isMethod(string $method)
+    {
+        return $this->getMethod() === strtoupper($method);
+    }
+
+    /**
+     * Retrieve a message header value by the given case-insensitive name.
+     */
+    public function header(string $key, $default = null)
+    {
+        $entries = $this->getHeader($key);
+        return !empty($entries) ? $entries[0] : $default;
+    }
+
+    /**
+     * Retrieve all headers from the request
+     */
+    public function headers()
+    {
+        return $this->getHeaders();
+    }
+
+    /**
+     * Retrieve a bearer token from the Authorization header
+     */
+    public function bearerToken()
+    {
+        $header = $this->getHeader('Authorization');
+
+        if (!$header[0] || strpos($header[0], 'Bearer ') !== 0) {
+            return null;
+        }
+
+        return trim(substr($header[0], 7));
+    }
+
+    /**
      * Get the root URL for the application.
      *
      * @return string
@@ -155,81 +161,6 @@ final class Request extends \Nyholm\Psr7\ServerRequest
     public function root()
     {
         return rtrim($this->baseUrl(), '/');
-    }
-
-    /**
-     * Access all of the user POST input
-     *
-     * @param string $name
-     * @return mixed|Collection
-     */
-    public function post(string $name = null)
-    {
-        if ($name) {
-            return $this->post->get($name);
-        }
-
-        return $this->post;
-    }
-
-    /**
-     * Access values from entire request payload (including the query string)
-     *
-     * @param string $name
-     * @return mixed|Collection
-     */
-    public function query(string $name = null)
-    {
-        if ($name) {
-            return $this->query->get($name);
-        }
-
-        return $this->query;
-    }
-
-    /**
-     * Access uploaded files from the request
-     *
-     * @param string $name
-     * @return mixed|FileCollection
-     */
-    public function files(string $name = null)
-    {
-        if ($name) {
-            return $this->files->get($name);
-        }
-
-        return $this->files;
-    }
-
-    /**
-     * Access all of the user COOKIE input
-     *
-     * @param string $name
-     * @return mixed|Collection
-     */
-    public function cookie(string $name = null)
-    {
-        if ($name) {
-            return $this->cookie->get($name);
-        }
-
-        return $this->cookie;
-    }
-
-    /**
-     * Access all server params
-     *
-     * @param string $name
-     * @return mixed|ServerCollection
-     */
-    public function server(string $name = null)
-    {
-        if ($name) {
-            return $this->server->get($name);
-        }
-
-        return $this->server;
     }
 
     /**
@@ -318,7 +249,7 @@ final class Request extends \Nyholm\Psr7\ServerRequest
      */
     public function fingerprint()
     {
-        if (!$route = $this->route()) {
+        if (!$this->route()) {
             throw new HttpException('Unable to generate fingerprint. Route unavailable.');
         }
 
@@ -466,23 +397,5 @@ final class Request extends \Nyholm\Psr7\ServerRequest
         $port = $parts['port'] ?? null;
 
         return [$host, $port];
-    }
-
-    /**
-     * @param string $query
-     * @return array
-     */
-    private function parseQuery(string $query)
-    {
-        $params = [];
-
-        if ($query) {
-            foreach (explode('&', $query) as $v) {
-                $param = explode('=', $v);
-                $params[$param[0]] = $param[1];
-            }
-        }
-
-        return $params;
     }
 }

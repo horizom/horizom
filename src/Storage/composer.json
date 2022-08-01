@@ -1,0 +1,34 @@
+{
+    "name": "horizom/storage",
+    "description": "The Horizom Storage package.",
+    "type": "library",
+    "license": "MIT",
+    "homepage": "https://horizom.github.io",
+    "support": {
+        "issues": "https://github.com/horizom/horizom/issues",
+        "source": "https://github.com/horizom/horizom"
+    },
+    "keywords": [
+        "filesystem",
+        "storage"
+    ],
+    "authors": [
+        {
+            "name": "Roland Edi",
+            "homepage": "https://github.com/lambirou"
+        }
+    ],
+    "require": {
+        "php": "^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Horizom\\Storage\\": ""
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
