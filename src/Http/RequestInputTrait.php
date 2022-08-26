@@ -31,16 +31,8 @@ trait RequestInputTrait
      */
     public function query(string $name = null, $default = null)
     {
-        $queries = [];
         $parse = $this->getUri()->getQuery();
-
-        if ($parse) {
-            foreach (explode('&', $parse) as $v) {
-                $param = explode('=', $v);
-                $queries[$param[0]] = $param[1];
-            }
-        }
-
+        $queries = $this->parseQueryParams($parse);
         $query = new Collection($queries);
 
         if ($name) {
@@ -99,11 +91,23 @@ trait RequestInputTrait
     }
 
     /**
-     * Get an collection of all input data ($_GET, $_POST, $_FILES)
+     * Get an collection of all input data ($_GET, $_POST, $_FILES, ...)
      */
     public function collect()
     {
-        return collect([...$this->query()->all(), ...$this->post()->all(), ...$this->files()->all()]);
+        $post = $this->post()->all();
+        $query = $this->query()->all();
+        $files = $this->files()->all();
+
+        $putdata = fopen("php://input", "r");
+        $putString = fread($putdata, 1024);
+        fclose($putdata);
+
+        $put = $this->parseQueryParams($putString);
+        $all = array_merge($query, $post, $put, $files);
+        $collect = array_map(fn ($i) => urldecode($i), $all);
+
+        return new Collection($collect);
     }
 
     /**
@@ -206,5 +210,19 @@ trait RequestInputTrait
     public function hasFile(string $key)
     {
         return $this->files()->has($key);
+    }
+
+    private function parseQueryParams(string $parse)
+    {
+        $params = [];
+
+        if ($parse) {
+            foreach (explode('&', $parse) as $v) {
+                $param = explode('=', $v);
+                $params[$param[0]] = $param[1];
+            }
+        }
+
+        return $params;
     }
 }
