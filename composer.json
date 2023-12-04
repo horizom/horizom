@@ -1,7 +1,7 @@
 {
   "name": "horizom/horizom",
   "description": "A light PHP framework",
-  "version": "3.0.0",
+  "version": "3.2.0",
   "license": "MIT",
   "homepage": "https://horizom.github.io",
   "keywords": [
@@ -15,14 +15,6 @@
     "source": "https://github.com/horizom/horizom"
   },
   "authors": [
-    {
-      "name": "Horizom Team",
-      "email": "horizom.team@gmail.com"
-    },
-    {
-      "name": "Codec Solutions",
-      "email": "infos@codecci.com"
-    },
     {
       "name": "Roland Edi",
       "email": "lambirou225@gmail.com"
@@ -46,6 +38,7 @@
     "illuminate/support": "^8.0",
     "illuminate/view": "^8.0",
     "middlewares/utils": "^3.2",
+    "middlewares/whoops": "^2.0",
     "nikic/fast-route": "^1.3",
     "nyholm/psr7": "^1.5",
     "php-di/invoker": "^2.1",
@@ -78,14 +71,7 @@
       "src/Http/helpers.php"
     ],
     "psr-4": {
-      "Horizom\\": "src/",
-      "Horizom\\Auth\\": "src/Auth/",
-      "Horizom\\Core\\": "src/Core/",
-      "Horizom\\Dispatcher\\": "src/Dispatcher/",
-      "Horizom\\Http\\": "src/Http/",
-      "Horizom\\Routing\\": "src/Routing/",
-      "Horizom\\Session\\": "src/Session/",
-      "Horizom\\Validation\\": "src/Validation/"
+      "Horizom\\": "src/"
     }
   },
   "autoload-dev": {
