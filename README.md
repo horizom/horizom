@@ -8,7 +8,7 @@
 
 ## About Horizom
 
-> **Note:** This repository contains the core code of the Horizom framework. If you want to build an application using Horizom, visit the main [Horizom repository](https://github.com/horizom/framework).
+> **Note:** This repository contains the core code of the Horizom framework. If you want to build an application using Horizom, visit the main [Horizom repository](https://github.com/horizom/app).
 
 ## Learning Horizom
 
