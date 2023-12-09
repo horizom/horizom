@@ -5,6 +5,7 @@ namespace Horizom\Http;
 use Horizom\Http\Exceptions\HttpException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
+use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
 
 final class Request extends \Nyholm\Psr7\ServerRequest
@@ -15,6 +16,11 @@ final class Request extends \Nyholm\Psr7\ServerRequest
      * @var string
      */
     private $base_path;
+
+    /**
+     * @var string
+     */
+    private $request_path;
 
     /**
      * @var string
@@ -245,7 +251,7 @@ final class Request extends \Nyholm\Psr7\ServerRequest
      * Get a unique fingerprint for the request / route / IP address.
      *
      * @return string
-     * @throws \HttpException
+     * @throws HttpException
      */
     public function fingerprint()
     {
@@ -254,7 +260,10 @@ final class Request extends \Nyholm\Psr7\ServerRequest
         }
 
         return sha1(implode('|', [
-            $this->getMethod(), $this->root(), $this->path(), $this->ip(),
+            $this->getMethod(),
+            $this->root(),
+            $this->path(),
+            $this->ip(),
         ]));
     }
 
@@ -307,7 +316,7 @@ final class Request extends \Nyholm\Psr7\ServerRequest
      */
     public function pjax()
     {
-        return $this->getHeader('X-PJAX') == true;
+        return count($this->getHeader('X-PJAX')) > 0;
     }
 
     /**

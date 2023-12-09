@@ -14,10 +14,12 @@ use Psr\Http\Server\MiddlewareInterface;
 
 class App
 {
+    use AppContainerTrait;
+
     /**
      * @const string Horizom Framework Version
      */
-    protected const VERSION = '3.1.0';
+    protected const VERSION = '4.0.0';
 
     /**
      * @var array
@@ -37,7 +39,11 @@ class App
 
         'app.locale' => 'en_US',
 
-        'app.prety_debug' => true,
+        'app.pretty_debug' => true,
+
+        'providers' => [],
+
+        'aliases' => [],
     ];
 
     /**
@@ -53,7 +59,7 @@ class App
     /**
      * @var Container
      */
-    private static $container;
+    private $container;
 
     /**
      * @var Dispatcher
@@ -71,9 +77,11 @@ class App
     public $router;
 
     /**
-     * @var App
+     * The current globally available app (if any).
+     *
+     * @var static
      */
-    private static $_instance;
+    protected static $instance;
 
     /**
      * Create new application
@@ -83,34 +91,38 @@ class App
         define("HORIZOM_VERSION", self::VERSION);
 
         $this->basePath = $basePath;
+        $this->container = $container ?? new Container();
 
-        if ($container === null) {
-            $container = new Container();
-            $container->set("version", $this->version());
-            $container->set(Request::class, Request::create());
-        }
+        $this->registerBaseBindings();
+        $this->registerBaseServiceProviders();
 
-        $resolver = new MiddlewareResolver($container);
-
-        $this->dispatcher = new Dispatcher([], $resolver);
-        $this->router = (new RouteCollectorFactory())->create($container);
-
-        self::$container = $container;
-        self::$_instance = $this;
+        $this->dispatcher = new Dispatcher([], new MiddlewareResolver($this->container));
+        $this->router = (new RouteCollectorFactory())->create($this->container);
     }
 
     /**
-     * Retourne l'instance de la class
-     * 
-     * @return Self
+     * Get the globally available instance of the container.
+     *
+     * @return static
      */
     public static function getInstance()
     {
-        if (is_null(self::$_instance)) {
-            self::$_instance = new Self();
+        if (is_null(static::$instance)) {
+            static::$instance = new static;
         }
 
-        return self::$_instance;
+        return static::$instance;
+    }
+
+    /**
+     * Set the shared instance of the container.
+     *
+     * @param Container|null  $container
+     * @return Container|static
+     */
+    public static function setInstance(Container $container = null)
+    {
+        return static::$instance = $container;
     }
 
     /**
@@ -120,7 +132,42 @@ class App
      */
     public function version()
     {
-        return 'Horizom (' . self::VERSION . ') PHP (' . PHP_VERSION . ')';
+        return static::VERSION;
+    }
+
+    /**
+     * Register the basic bindings into the container.
+     *
+     * @return void
+     */
+    protected function registerBaseBindings()
+    {
+        $this->instance("version", $this->version());
+        $this->instance('app', $this);
+        $this->instance(Container::class, $this->container);
+        $this->instance(Request::class, Request::create());
+    }
+
+    /**
+     * Register all of the base service providers.
+     *
+     * @return void
+     */
+    protected function registerBaseServiceProviders()
+    {
+        $providers = (array) config('providers');
+
+        foreach ($providers as $provider) {
+            $this->register(new $provider($this));
+        }
+    }
+
+    /**
+     * Dependency Injection Container.
+     */
+    public function container(): Container
+    {
+        return $this->container;
     }
 
     /**
@@ -137,22 +184,6 @@ class App
     }
 
     /**
-     * Dependency Injection Container.
-     */
-    public function container(): Container
-    {
-        return self::$container;
-    }
-
-    /**
-     * Finds an entry of the container by its identifier and returns it.
-     */
-    public function get(string $id)
-    {
-        return self::$container->get($id);
-    }
-
-    /**
      * Load a configuration file into the application.
      */
     public function configure(string $name): self
@@ -165,10 +196,10 @@ class App
 
     /**
      * Set your application base path
-     * 
-     * If you want to run your Slim Application from a sub-directory 
+     *
+     * If you want to run your Slim Application from a sub-directory
      * in your Server’s Root instead of creating a Virtual Host
-     * 
+     *
      * @param string $path Path to your Application
      */
     public function setBasePath(string $path = ''): self
@@ -179,7 +210,7 @@ class App
 
     /**
      * Set error handler middleware
-     * 
+     *
      * @param ErrorHandlerInterface|string $errorHandler
      */
     public function setErrorHandler($errorHandler): self
@@ -195,7 +226,7 @@ class App
 
     /**
      * Register a new middleware in stack
-     * 
+     *
      * @param MiddlewareInterface|string|callable $middleware
      * @return self
      */
@@ -210,7 +241,7 @@ class App
      */
     public function run()
     {
-        $request = self::$container->get(\Horizom\Http\Request::class);
+        $request = $this->container->get(Request::class);
 
         if (config('app.pretty_debug') === true) {
             $accepts = $request->getHeader('Accept');
@@ -226,7 +257,7 @@ class App
             }
 
             $this->add(new \Middlewares\Whoops($whoops));
-        } else if ($this->errorHandler !== null) {
+        } elseif ($this->errorHandler !== null) {
             $this->add(new ErrorHandlingMiddleware($this->errorHandler));
         }
 
