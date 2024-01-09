@@ -15,6 +15,20 @@ if (!function_exists('app')) {
     }
 }
 
+if (!function_exists(function: 'base_path')) {
+    /**
+     * Application
+     */
+    function base_path(string $path = null)
+    {
+        if (is_null($path)) {
+            return HORIZOM_ROOT;
+        }
+
+        return HORIZOM_ROOT . '/' . trim($path, '/');
+    }
+}
+
 if (!function_exists('config')) {
     /**
      * Accessing Configuration Values

@@ -2,7 +2,6 @@
 
 /.vscode/*
 /vendor
-/tests
 /monorepo-builder.php
 
 .env

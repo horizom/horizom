@@ -4,29 +4,12 @@ declare(strict_types=1);
 
 namespace Horizom\Core;
 
-use Closure;
-use Horizom\Core\App;
-
 abstract class ServiceProvider
 {
     /**
      * @var App
      */
     protected $app;
-
-    /**
-     * All of the registered booting callbacks.
-     *
-     * @var array
-     */
-    protected $bootingCallbacks = [];
-
-    /**
-     * All of the registered booted callbacks.
-     *
-     * @var array
-     */
-    protected $bootedCallbacks = [];
 
     /**
      * Create a new service provider instance.
@@ -45,7 +28,17 @@ abstract class ServiceProvider
      */
     public function register()
     {
-        //
+        // no-op
+    }
+
+    /**
+     * Binds and sets up implementations at boot time.
+     *
+     * @return void The method will not return any value.
+     */
+    public function boot()
+    {
+        // no-op
     }
 
     /**
@@ -66,59 +59,5 @@ abstract class ServiceProvider
     public function when()
     {
         return [];
-    }
-
-    /**
-     * Register a booting callback to be run before the "boot" method is called.
-     *
-     * @param  \Closure  $callback
-     * @return void
-     */
-    public function booting(Closure $callback)
-    {
-        $this->bootingCallbacks[] = $callback;
-    }
-
-    /**
-     * Register a booted callback to be run after the "boot" method is called.
-     *
-     * @param  \Closure  $callback
-     * @return void
-     */
-    public function booted(Closure $callback)
-    {
-        $this->bootedCallbacks[] = $callback;
-    }
-
-    /**
-     * Call the registered booting callbacks.
-     *
-     * @return void
-     */
-    public function callBootingCallbacks()
-    {
-        $index = 0;
-
-        while ($index < count($this->bootingCallbacks)) {
-            $this->app->call($this->bootingCallbacks[$index]);
-
-            $index++;
-        }
-    }
-
-    /**
-     * Call the registered booted callbacks.
-     *
-     * @return void
-     */
-    public function callBootedCallbacks()
-    {
-        $index = 0;
-
-        while ($index < count($this->bootedCallbacks)) {
-            $this->app->call($this->bootedCallbacks[$index]);
-
-            $index++;
-        }
     }
 }
