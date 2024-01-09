@@ -1,10 +1,6 @@
 <?php
 
 use App\Controllers\MainController;
-use Horizom\Routing\RouteCollector;
+use Horizom\Routing\Facades\Route;
 
-/**
- * @var RouteCollector $router
- */
-
-$router->get('/', [MainController::class, 'index']);
+Route::get('/', [MainController::class, 'index']);

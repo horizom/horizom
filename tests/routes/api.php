@@ -1,14 +1,8 @@
 <?php
 
 use App\Controllers\ApiController;
-use Horizom\Routing\RouteCollector;
+use Horizom\Routing\Facades\Route;
 
-/**
- * @var RouteCollector $router
- */
-
-$router->group([], function (RouteCollector $router) {
-    $router->any('/', [ApiController::class, 'index']);
-    $router->any('/status', [ApiController::class, 'status']);
-    $router->any('/version', [ApiController::class, 'version']);
-});
+Route::any('/', [ApiController::class, 'index']);
+Route::any('/status', [ApiController::class, 'status']);
+Route::any('/version', [ApiController::class, 'version']);

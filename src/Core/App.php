@@ -24,37 +24,7 @@ class App
     /**
      * @const string Horizom Framework Version
      */
-    protected const VERSION = '3.1.0';
-
-    /**
-     * @var array
-     */
-    protected static $settings = [
-        'app.name' => 'Horizom',
-
-        'app.env' => 'development',
-
-        'app.base_path' => '',
-
-        'app.base_url' => 'http://localhost:8000',
-
-        'app.asset_url' => null,
-
-        'app.timezone' => 'UTC',
-
-        'app.locale' => 'en_US',
-
-        'app.pretty_debug' => true,
-
-        'providers' => [],
-
-        'aliases' => [],
-    ];
-
-    /**
-     * @var string
-     */
-    protected $defaultNamespace;
+    protected const VERSION = '4.0.0';
 
     /**
      * @var string
@@ -77,6 +47,11 @@ class App
     private $errorHandler;
 
     private $providers = [];
+
+    /**
+     * @var Config
+     */
+    protected $config;
 
     /**
      * @var RouteCollector
@@ -103,6 +78,7 @@ class App
         $this->dispatcher = new Dispatcher([], new MiddlewareResolver($this->container));
         $this->router = (new RouteCollectorFactory)->create($this->container);
 
+        $this->singleton(RouteCollector::class, fn() => $this->router);
         $this->registerBaseServiceProviders();
 
         self::$instance = $this;
@@ -251,16 +227,29 @@ class App
     }
 
     /**
-     * Set or Get Configuration Values into the application.
+     * Set Configuration Values into the application.
      */
-    public static function config(array $config = null)
+    public function setConfig(array $config)
     {
-        if ($config !== null) {
-            self::$settings = array_merge(self::$settings, $config);
-            return null;
+        if ($this->config === null) {
+            $this->config = new Config($config);
+        } else {
+            $this->config->set($config);
         }
 
-        return self::$settings;
+        $this->instance(Config::class, $this->config);
+    }
+
+    /**
+     * Get Configuration Values from the application.
+     */
+    public function getConfig(string $key = null)
+    {
+        if ($key === null) {
+            return $this->config;
+        }
+
+        return $this->config->get($key);
     }
 
     /**
@@ -268,9 +257,7 @@ class App
      */
     public function configure(string $name): self
     {
-        $config = require HORIZOM_ROOT . '/config/' . $name . '.php';
-        $this->config($config);
-
+        $this->setConfig(require base_path("config/{$name}.php"));
         return $this;
     }
 
@@ -313,9 +300,10 @@ class App
 
         $accepts = $request->getHeader('Accept');
 
-        $this->registerBaseMiddlewares($accepts);
+        $this->registerErrorHandler($accepts);
         $this->registerServiceProvidersAndBoot();
 
+        $this->singleton(RouteCollector::class, fn() => $this->router);
         $this->add($this->router->getRouter());
 
         $response = $this->dispatcher->dispatch($request);
@@ -328,7 +316,7 @@ class App
      *
      * @param array<int, string> $accepts
      */
-    protected function registerBaseMiddlewares(array $accepts)
+    protected function registerErrorHandler(array $accepts)
     {
         if (config('app.pretty_debug') === true) {
             $whoops = new \Whoops\Run();
@@ -355,7 +343,9 @@ class App
      */
     protected function registerBaseServiceProviders()
     {
-        //
+        foreach ($this->providers as $provider) {
+            $this->register($provider);
+        }
     }
 
     /**
@@ -365,7 +355,9 @@ class App
      */
     protected function registerServiceProvidersAndBoot()
     {
-        foreach (config('providers') as $provider) {
+        $providers = (array) config('providers');
+
+        foreach ($providers as $provider) {
             $this->register($provider);
         }
 

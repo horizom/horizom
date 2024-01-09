@@ -35,8 +35,7 @@ if (!function_exists('config')) {
      */
     function config(string $key, $default = null)
     {
-        $configs = App::config();
-        return isset($configs[$key]) ? $configs[$key] : $default;
+        return app()->getConfig()->get($key, $default);
     }
 }
 
