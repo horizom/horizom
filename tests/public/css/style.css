@@ -1,0 +1,80 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+    color: #111;
+}
+
+.container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.container .block h1 {
+    margin-top: 30px;
+    margin-bottom: 10px;
+    font-size: 64px;
+    color: #545454;
+}
+
+.container .block .version {
+    display: inline-flex;
+    align-items: flex-start;
+    justify-content: center;
+    flex-direction: column;
+    margin-top: 25px;
+    margin-left: 20px;
+    margin-right: 20px;
+    padding: 20px 20px;
+    width: auto;
+    background-color: #282C35;
+    border-radius: 5px;
+    color: #f1f1f1;
+    font-size: 16px;
+}
+
+.container .block .version p {
+    margin: 5px 0
+}
+
+.container .block .version .comment {
+    color: #696C6A;
+}
+
+.container .block .version span {
+    margin-left: 6px;
+    color: #95C57B;
+}
+
+.container .menu {
+    margin-top: 40px;
+}
+
+.container .menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.container .menu ul li {
+    display: inline-block;
+    text-transform: uppercase;
+}
+
+.container .menu ul li {
+    padding: 10px 30px;
+}
+
+.container .menu ul li a,
+.container .menu ul li a:hover,
+.container .menu ul li a:visited {
+    text-decoration: none;
+    color: #111;
+}

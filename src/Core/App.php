@@ -2,7 +2,9 @@
 
 namespace Horizom\Core;
 
+use DI\ContainerBuilder;
 use Horizom\Core\Middlewares\ErrorHandlingMiddleware;
+use Horizom\Core\ServiceProvider;
 use Horizom\Dispatcher\Dispatcher;
 use Horizom\Dispatcher\MiddlewareResolver;
 use Horizom\Http\Request;
@@ -15,35 +17,14 @@ use Psr\Http\Server\MiddlewareInterface;
 class App
 {
     /**
+     * @var self
+     */
+    private static $instance;
+
+    /**
      * @const string Horizom Framework Version
      */
-    protected const VERSION = '3.1.0';
-
-    /**
-     * @var array
-     */
-    protected static $settings = [
-        'app.name' => 'Horizom',
-
-        'app.env' => 'development',
-
-        'app.base_path' => '',
-
-        'app.base_url' => 'http://localhost:8000',
-
-        'app.asset_url' => null,
-
-        'app.timezone' => 'UTC',
-
-        'app.locale' => 'en_US',
-
-        'app.prety_debug' => true,
-    ];
-
-    /**
-     * @var string
-     */
-    protected $defaultNamespace;
+    protected const VERSION = '4.0.0';
 
     /**
      * @var string
@@ -53,7 +34,7 @@ class App
     /**
      * @var Container
      */
-    private static $container;
+    private $container;
 
     /**
      * @var Dispatcher
@@ -65,15 +46,17 @@ class App
      */
     private $errorHandler;
 
+    private $providers = [];
+
+    /**
+     * @var Config
+     */
+    protected $config;
+
     /**
      * @var RouteCollector
      */
     public $router;
-
-    /**
-     * @var App
-     */
-    private static $_instance;
 
     /**
      * Create new application
@@ -85,32 +68,34 @@ class App
         $this->basePath = $basePath;
 
         if ($container === null) {
-            $container = new Container();
-            $container->set("version", $this->version());
-            $container->set(Request::class, Request::create());
+            $containerBuilder = new ContainerBuilder(Container::class);
+            $containerBuilder->useAutowiring(true);
+
+            $this->container = $containerBuilder->build();
+            $this->set("version", $this->version());
         }
 
-        $resolver = new MiddlewareResolver($container);
+        $this->dispatcher = new Dispatcher([], new MiddlewareResolver($this->container));
+        $this->router = (new RouteCollectorFactory)->create($this->container);
 
-        $this->dispatcher = new Dispatcher([], $resolver);
-        $this->router = (new RouteCollectorFactory())->create($container);
+        $this->singleton(RouteCollector::class, fn() => $this->router);
+        $this->registerBaseServiceProviders();
 
-        self::$container = $container;
-        self::$_instance = $this;
+        self::$instance = $this;
     }
 
     /**
      * Retourne l'instance de la class
-     * 
-     * @return Self
+     *
+     * @return self
      */
     public static function getInstance()
     {
-        if (is_null(self::$_instance)) {
-            self::$_instance = new Self();
+        if (is_null(self::$instance)) {
+            self::$instance = new self();
         }
 
-        return self::$_instance;
+        return self::$instance;
     }
 
     /**
@@ -124,32 +109,147 @@ class App
     }
 
     /**
-     * Set or Get Configuration Values into the application.
+     * Register a new middleware in stack
+     *
+     * @param MiddlewareInterface|string|callable $middleware
+     * @return self
      */
-    public static function config(array $config = null)
+    public function add($middleware): self
     {
-        if ($config !== null) {
-            self::$settings = array_merge(self::$settings, $config);
-            return null;
+        $this->dispatcher->add($middleware);
+        return $this;
+    }
+
+    /**
+     * Get the container instance.
+     */
+    public function getContainer()
+    {
+        return $this->container;
+    }
+
+    /**
+     * Build an entry of the container by its name.
+     * This method behave like get() except resolves the entry again every time.
+     */
+    public function make(string $name, array $parameters = [])
+    {
+        return $this->container->make($name, $parameters);
+    }
+
+    /**
+     * Register a shared binding in the container.
+     *
+     * @param string $abstract
+     * @param callable $concrete
+     * @return mixed
+     */
+    public function singleton(string $abstract, $concrete = null)
+    {
+        $this->set($abstract, $concrete ?? $abstract);
+    }
+
+    /**
+     * Define an object or a value in the container.
+     *
+     * @param string $abstract
+     * @param mixed $concrete
+     * @return mixed
+     */
+    public function instance(string $abstract, $instance)
+    {
+        return $this->set($abstract, $instance);
+    }
+
+    /**
+     * Define an object in the container.
+     *
+     * @param string $abstract
+     * @param mixed $concrete
+     */
+    public function bind(string $abstract, $concrete)
+    {
+        $this->set($abstract, $concrete);
+    }
+
+    /**
+     * Define an object or a value in the container.
+     *
+     * @param string $name
+     * @param mixed $value
+     */
+    public function set($name, $value)
+    {
+        return $this->container->set($name, $value);
+    }
+
+    /**
+     * Get an entry of the container by its name.
+     */
+    public function get(string $name)
+    {
+        return $this->container->get($name);
+    }
+
+    /**
+     * Resolve a service provider instance from the class name.
+     *
+     * @param  string  $provider
+     * @return ServiceProvider
+     */
+    public function resolveProvider($provider)
+    {
+        return new $provider($this);
+    }
+
+    /**
+     * Register a service provider.
+     *
+     * @param ServiceProvider|string $provider
+     */
+    public function register($provider)
+    {
+        if (is_string($provider)) {
+            $provider = $this->resolveProvider($provider);
         }
 
-        return self::$settings;
+        return $this->container->register($provider);
     }
 
     /**
-     * Dependency Injection Container.
+     * Boots up the application calling the `boot` method of each registered service provider.
+     *
+     * @see \Horizom\Core\ServiceProvider::boot()
      */
-    public function container(): Container
+    public function boot()
     {
-        return self::$container;
+        $this->container->boot();
     }
 
     /**
-     * Finds an entry of the container by its identifier and returns it.
+     * Set Configuration Values into the application.
      */
-    public function get(string $id)
+    public function setConfig(array $config)
     {
-        return self::$container->get($id);
+        if ($this->config === null) {
+            $this->config = new Config($config);
+        } else {
+            $this->config->set($config);
+        }
+
+        $this->instance(Config::class, $this->config);
+    }
+
+    /**
+     * Get Configuration Values from the application.
+     */
+    public function getConfig(string $key = null)
+    {
+        if ($key === null) {
+            return $this->config;
+        }
+
+        return $this->config->get($key);
     }
 
     /**
@@ -157,18 +257,16 @@ class App
      */
     public function configure(string $name): self
     {
-        $config = require HORIZOM_ROOT . '/config/' . $name . '.php';
-        $this->config($config);
-
+        $this->setConfig(require base_path("config/{$name}.php"));
         return $this;
     }
 
     /**
      * Set your application base path
-     * 
-     * If you want to run your Slim Application from a sub-directory 
+     *
+     * If you want to run your Slim Application from a sub-directory
      * in your Server’s Root instead of creating a Virtual Host
-     * 
+     *
      * @param string $path Path to your Application
      */
     public function setBasePath(string $path = ''): self
@@ -179,7 +277,7 @@ class App
 
     /**
      * Set error handler middleware
-     * 
+     *
      * @param ErrorHandlerInterface|string $errorHandler
      */
     public function setErrorHandler($errorHandler): self
@@ -194,26 +292,33 @@ class App
     }
 
     /**
-     * Register a new middleware in stack
-     * 
-     * @param MiddlewareInterface|string|callable $middleware
-     * @return self
+     * Run The Application
      */
-    public function add($middleware): self
+    public function run(Request $request)
     {
-        $this->dispatcher->add($middleware);
-        return $this;
+        $this->singleton(Request::class, fn() => $request);
+
+        $accepts = $request->getHeader('Accept');
+
+        $this->registerErrorHandler($accepts);
+        $this->registerServiceProvidersAndBoot();
+
+        $this->singleton(RouteCollector::class, fn() => $this->router);
+        $this->add($this->router->getRouter());
+
+        $response = $this->dispatcher->dispatch($request);
+
+        $this->emit($response);
     }
 
     /**
-     * Run The Application
+     * Register basic middlewares
+     *
+     * @param array<int, string> $accepts
      */
-    public function run()
+    protected function registerErrorHandler(array $accepts)
     {
-        $request = self::$container->get(\Horizom\Http\Request::class);
-
         if (config('app.pretty_debug') === true) {
-            $accepts = $request->getHeader('Accept');
             $whoops = new \Whoops\Run();
 
             if (
@@ -226,14 +331,37 @@ class App
             }
 
             $this->add(new \Middlewares\Whoops($whoops));
-        } else if ($this->errorHandler !== null) {
+        } elseif ($this->errorHandler !== null) {
             $this->add(new ErrorHandlingMiddleware($this->errorHandler));
         }
+    }
 
-        $this->add($this->router->getRouter());
-        $response = $this->dispatcher->dispatch($request);
+    /**
+     * Register all of the base service providers.
+     *
+     * @return void
+     */
+    protected function registerBaseServiceProviders()
+    {
+        foreach ($this->providers as $provider) {
+            $this->register($provider);
+        }
+    }
 
-        $this->emit($response);
+    /**
+     * Register service providers and boot them if the application is already booted.
+     *
+     * @return void
+     */
+    protected function registerServiceProvidersAndBoot()
+    {
+        $providers = (array) config('providers');
+
+        foreach ($providers as $provider) {
+            $this->register($provider);
+        }
+
+        $this->boot();
     }
 
     private function emit(ResponseInterface $response)
